@@ -1489,6 +1489,7 @@ document.getElementById('printBtn').addEventListener('click', function(){
   var today = new Date();
   var dateStr = today.getFullYear() + '.' + String(today.getMonth()+1).padStart(2,'0') + '.' + String(today.getDate()).padStart(2,'0');
   document.getElementById('printMeta').textContent = building + ' · 견적일자 ' + dateStr;
+  logQuoteEvent();
   window.print();
 });
 
@@ -1723,10 +1724,104 @@ function dashLiveTag(){
   return '<span class="dash-tag" style="background:var(--teal-light);color:var(--teal-dark);">실데이터</span>';
 }
 
+// ── 견적 이벤트 로깅 (인쇄/PDF 저장 시점을 "견적 1건 발생"으로 기록) ─────────
+function pad2(n){ return String(n).padStart(2, '0'); }
+function dateStrOf(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+function monthStrOf(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1); }
+function dateStrOffset(base, offsetDays){ var d = new Date(base); d.setDate(d.getDate() + offsetDays); return dateStrOf(d); }
+function monthStrOffset(base, offsetMonths){ var d = new Date(base.getFullYear(), base.getMonth() + offsetMonths, 1); return monthStrOf(d); }
+
+function getClientId(){
+  var KEY = 'fomers_client_id_v1';
+  var id = null;
+  try{ id = localStorage.getItem(KEY); }catch(e){}
+  if(!id){
+    id = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
+    try{ localStorage.setItem(KEY, id); }catch(e){}
+  }
+  return id;
+}
+
+function buildQuoteSummary(){
+  var items = [], roomsUsed = [], totalQty = 0, totalAmount = 0;
+  state.rooms.forEach(function(room){
+    var codes = Object.keys(room.items);
+    if(codes.length){ roomsUsed.push({floor: room.floor, name: room.name}); }
+    codes.forEach(function(code){
+      var p = findProduct(code);
+      if(!p) return;
+      var qty = room.items[code];
+      totalQty += qty;
+      totalAmount += p.price * qty;
+      items.push({code: code, name: p.name, qty: qty});
+    });
+  });
+  var buildingInput = document.getElementById('buildingInput');
+  return {
+    totalQty: totalQty,
+    totalAmount: totalAmount,
+    items: items,
+    rooms: roomsUsed,
+    building: buildingInput ? buildingInput.value.trim() : ''
+  };
+}
+
+// 인쇄/PDF 저장 버튼을 누른 시점 = 실제 견적 1건이 만들어진 시점으로 간주하고 Firestore에 기록합니다.
+// (담긴 품목이 없는 빈 견적은 기록하지 않고, 기록 실패는 조용히 무시하여 인쇄 자체를 방해하지 않습니다.
+//  Firestore 보안 규칙에서 quoteEvents 컬렉션에 대한 create 권한이 열려 있어야 실제로 저장됩니다.)
+function logQuoteEvent(){
+  if(!FIREBASE_READY || !fbDb) return;
+  var summary = buildQuoteSummary();
+  if(summary.totalQty <= 0) return;
+  var now = new Date();
+  fbDb.collection('quoteEvents').add({
+    ts: firebase.firestore.FieldValue.serverTimestamp(),
+    dateStr: dateStrOf(now),
+    monthStr: monthStrOf(now),
+    building: summary.building,
+    totalQty: summary.totalQty,
+    totalAmount: summary.totalAmount,
+    items: summary.items.slice(0, 50),
+    rooms: summary.rooms.slice(0, 20),
+    clientId: getClientId()
+  }).catch(function(){ /* 통계 기록 실패는 조용히 무시 (인쇄 흐름에 영향 없음) */ });
+}
+
+function pctDelta(cur, prev){
+  if(prev <= 0){ return cur > 0 ? '신규' : '–'; }
+  var pct = ((cur - prev) / prev) * 100;
+  return (pct >= 0 ? '▲ ' : '▼ ') + Math.abs(pct).toFixed(1) + '%';
+}
+function isUpDelta(cur, prev){
+  if(prev <= 0) return cur > 0;
+  return cur >= prev;
+}
+
+var QUOTE_EVENTS_FETCH_LIMIT = 500;
+
 function renderAdminDashboardHome(){
   var main = document.getElementById('dashMain');
+  main.innerHTML = '<h2 class="dash-title">대시보드</h2><div class="dash-card"><div class="dash-placeholder">데이터를 불러오는 중입니다...</div></div>';
 
-  // 카테고리별 비중 — 실제 PRODUCTS 데이터로 계산 (유일한 실데이터 섹션)
+  if(!FIREBASE_READY || !fbDb){
+    renderAdminDashboardHomeContent([]);
+    return;
+  }
+  fbDb.collection('quoteEvents').orderBy('ts', 'desc').limit(QUOTE_EVENTS_FETCH_LIMIT).get().then(function(snap){
+    var events = [];
+    snap.forEach(function(doc){ events.push(doc.data()); });
+    renderAdminDashboardHomeContent(events);
+  }).catch(function(err){
+    main.innerHTML = '<h2 class="dash-title">대시보드</h2>' +
+      '<div class="dash-card"><div class="dash-placeholder">데이터를 불러오지 못했습니다 · Firestore 보안 규칙에서 quoteEvents 컬렉션 읽기 권한을 확인해주세요' +
+      (err && err.message ? '<br><span style="font-size:10px;">(' + err.message + ')</span>' : '') + '</div></div>';
+  });
+}
+
+function renderAdminDashboardHomeContent(events){
+  var main = document.getElementById('dashMain');
+
+  // 카테고리별 비중 — 실제 PRODUCTS 데이터로 계산
   var catCounts = {};
   PRODUCTS.forEach(function(p){ var c = p.cat || '기타'; catCounts[c] = (catCounts[c]||0) + 1; });
   var catTotal = PRODUCTS.length || 1;
@@ -1741,65 +1836,131 @@ function renderAdminDashboardHome(){
     '</div>';
   }).join('');
 
-  // 샘플 KPI (실사용 견적/고객 이력을 저장하는 백엔드가 아직 없어 견본값입니다)
+  // ── 아래는 모두 quoteEvents(인쇄/PDF 저장 시 기록되는 실제 견적 이벤트) 기반 실데이터 ──
+  var now = new Date();
+  var todayStr = dateStrOf(now);
+  var yesterdayStr = dateStrOffset(now, -1);
+  var thisMonthStr = monthStrOf(now);
+  var lastMonthStr = monthStrOffset(now, -1);
+
+  var todayCount = 0, yesterdayCount = 0;
+  var monthCount = 0, lastMonthCount = 0;
+  var monthAmount = 0, lastMonthAmount = 0;
+  var productCountsThisMonth = {};   // code -> {name, qty}
+  var roomCounts = {};               // room name -> count (전체 조회 범위 기준)
+  var dailyCounts = {};              // dateStr -> count (최근 14일 추이용)
+  var clientFirstSeen = {};          // clientId -> 조회 범위 내 최초 등장 날짜(dateStr)
+
+  events.forEach(function(ev){
+    if(ev.dateStr === todayStr) todayCount++;
+    if(ev.dateStr === yesterdayStr) yesterdayCount++;
+    if(ev.monthStr === thisMonthStr){
+      monthCount++;
+      monthAmount += (ev.totalAmount || 0);
+      (ev.items || []).forEach(function(it){
+        if(!productCountsThisMonth[it.code]) productCountsThisMonth[it.code] = {name: it.name, qty: 0};
+        productCountsThisMonth[it.code].qty += (it.qty || 0);
+      });
+    }
+    if(ev.monthStr === lastMonthStr){
+      lastMonthCount++;
+      lastMonthAmount += (ev.totalAmount || 0);
+    }
+    (ev.rooms || []).forEach(function(r){
+      var key = r.name || '기타';
+      roomCounts[key] = (roomCounts[key] || 0) + 1;
+    });
+    if(ev.dateStr){ dailyCounts[ev.dateStr] = (dailyCounts[ev.dateStr] || 0) + 1; }
+    if(ev.clientId){
+      if(!clientFirstSeen[ev.clientId] || ev.dateStr < clientFirstSeen[ev.clientId]){
+        clientFirstSeen[ev.clientId] = ev.dateStr;
+      }
+    }
+  });
+
+  var newCustomersThisMonth = Object.keys(clientFirstSeen).filter(function(cid){
+    return (clientFirstSeen[cid] || '').indexOf(thisMonthStr) === 0;
+  }).length;
+  var newCustomersLastMonth = Object.keys(clientFirstSeen).filter(function(cid){
+    return (clientFirstSeen[cid] || '').indexOf(lastMonthStr) === 0;
+  }).length;
+
+  var monthAvg = monthCount > 0 ? Math.round(monthAmount / monthCount) : 0;
+  var lastMonthAvg = lastMonthCount > 0 ? Math.round(lastMonthAmount / lastMonthCount) : 0;
+
+  function won(n){
+    if(n >= 100000000) return (n / 100000000).toFixed(1) + '억';
+    if(n >= 10000) return Math.round(n / 10000).toLocaleString('ko-KR') + '만';
+    return n.toLocaleString('ko-KR') + '원';
+  }
+
   var kpis = [
-    {l:'오늘 견적', v:'12', d:'▲ 20.0%', up:true},
-    {l:'이번달 견적', v:'187', d:'▲ 8.4%', up:true},
-    {l:'총 견적 금액', v:'8.2억', d:'▲ 11.2%', up:true},
-    {l:'평균 견적 금액', v:'440만', d:'▼ 2.1%', up:false},
-    {l:'신규 고객', v:'4', d:'▲ 33.3%', up:true}
+    {l:'오늘 견적', v: todayCount.toLocaleString('ko-KR'), d: pctDelta(todayCount, yesterdayCount) + ' (전일 대비)', up: isUpDelta(todayCount, yesterdayCount)},
+    {l:'이번달 견적', v: monthCount.toLocaleString('ko-KR'), d: pctDelta(monthCount, lastMonthCount) + ' (전월 대비)', up: isUpDelta(monthCount, lastMonthCount)},
+    {l:'이번달 총 견적 금액', v: won(monthAmount), d: pctDelta(monthAmount, lastMonthAmount) + ' (전월 대비)', up: isUpDelta(monthAmount, lastMonthAmount)},
+    {l:'이번달 평균 견적 금액', v: won(monthAvg), d: pctDelta(monthAvg, lastMonthAvg) + ' (전월 대비)', up: isUpDelta(monthAvg, lastMonthAvg)},
+    {l:'이번달 신규 고객', v: newCustomersThisMonth.toLocaleString('ko-KR'), d: pctDelta(newCustomersThisMonth, newCustomersLastMonth) + ' (전월 대비)', up: isUpDelta(newCustomersThisMonth, newCustomersLastMonth)}
   ];
   var kpisHtml = kpis.map(function(k){
     return '<div class="dash-kpi"><div class="l">' + k.l + '</div><div class="v">' + k.v + '</div>' +
-      '<div class="d ' + (k.up ? 'up' : 'down') + '">' + k.d + ' (전월 대비)</div></div>';
+      '<div class="d ' + (k.up ? 'up' : 'down') + '">' + k.d + '</div></div>';
   }).join('');
 
-  // 샘플 인기 제품 TOP 10
-  var topProductsPool = PRODUCTS.length ? PRODUCTS : FALLBACK_PRODUCTS;
-  var topProducts = topProductsPool.slice(0, 10);
-  var topHtml = topProducts.length ? topProducts.map(function(p, i){
+  // 인기 제품 TOP 10 (이번 달, quoteEvents 기반 실데이터)
+  var topEntries = Object.keys(productCountsThisMonth).map(function(code){ return productCountsThisMonth[code]; })
+    .sort(function(a, b){ return b.qty - a.qty; }).slice(0, 10);
+  var topHtml = topEntries.length ? topEntries.map(function(p, i){
     return '<div class="dash-top-item"><span class="rank">' + (i+1) + '</span>' +
-      '<span class="name">' + p.name + '</span><span class="count">' + (95 - i*6) + '건</span></div>';
-  }).join('') : '<div class="dash-placeholder">표시할 제품이 없습니다</div>';
+      '<span class="name">' + p.name + '</span><span class="count">' + p.qty.toLocaleString('ko-KR') + '건</span></div>';
+  }).join('') : '<div class="dash-placeholder">이번 달 견적 데이터가 아직 없습니다</div>';
 
-  // 샘플 기간별 견적 추이 (간단한 인라인 SVG 라인차트, 외부 차트 라이브러리 없이 구현)
-  var trend = [8,11,9,14,12,17,15,19,16,20,18,23];
-  var maxT = Math.max.apply(null, trend);
-  var svgW = 100, svgH = 100, pad = 6;
+  // 기간별 견적 추이 (최근 14일, quoteEvents 기반 실데이터, 외부 차트 라이브러리 없이 인라인 SVG로 구현)
+  var trendDays = [];
+  for(var i = 13; i >= 0; i--){ trendDays.push(dateStrOffset(now, -i)); }
+  var trend = trendDays.map(function(d){ return dailyCounts[d] || 0; });
+  var maxT = Math.max.apply(null, trend.concat([1]));
+  var svgW = 100, svgH = 100, svgPad = 6;
   var pts = trend.map(function(v, i){
-    var x = pad + (i / (trend.length - 1)) * (svgW - pad*2);
-    var y = svgH - pad - (v / maxT) * (svgH - pad*2);
+    var x = svgPad + (i / (trend.length - 1)) * (svgW - svgPad*2);
+    var y = svgH - svgPad - (v / maxT) * (svgH - svgPad*2);
     return x.toFixed(1) + ',' + y.toFixed(1);
   }).join(' ');
-  var trendSvg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:150px;" preserveAspectRatio="none">' +
-    '<polyline points="' + pts + '" fill="none" stroke="var(--teal)" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>' +
-    '</svg>';
+  var trendSvg = trend.some(function(v){ return v > 0; }) ?
+    ('<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:150px;" preserveAspectRatio="none">' +
+      '<polyline points="' + pts + '" fill="none" stroke="var(--teal)" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>' +
+      '</svg>') :
+    '<div class="dash-placeholder">최근 14일간 견적 데이터가 아직 없습니다</div>';
 
-  // 샘플 공간 유형별 설계 빈도
-  var spaceRows = [
-    {name:'교무실', count:41}, {name:'회의실', count:29}, {name:'도서관', count:18}, {name:'음악실', count:12}
-  ];
-  var spaceMax = Math.max.apply(null, spaceRows.map(function(r){ return r.count; }));
-  var spaceHtml = spaceRows.map(function(r){
+  // 공간 유형별 설계 빈도 (조회 범위 내 전체 quoteEvents 기반 실데이터)
+  var spaceRows = Object.keys(roomCounts).map(function(name){ return {name: name, count: roomCounts[name]}; })
+    .sort(function(a, b){ return b.count - a.count; }).slice(0, 8);
+  var spaceMax = Math.max.apply(null, spaceRows.map(function(r){ return r.count; }).concat([1]));
+  var spaceHtml = spaceRows.length ? spaceRows.map(function(r){
     var pct = Math.round((r.count / spaceMax) * 1000) / 10;
     return '<div class="dash-bar-row">' +
-      '<div class="top"><span>' + r.name + '</span><span>' + r.count + '건</span></div>' +
+      '<div class="top"><span>' + r.name + '</span><span>' + r.count.toLocaleString('ko-KR') + '건</span></div>' +
       '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:var(--teal);"></div></div>' +
     '</div>';
-  }).join('');
+  }).join('') : '<div class="dash-placeholder">공간별 견적 데이터가 아직 없습니다</div>';
+
+  var capNote = events.length >= QUOTE_EVENTS_FETCH_LIMIT ?
+    (' 최근 ' + QUOTE_EVENTS_FETCH_LIMIT + '건까지만 집계에 반영됩니다.') : '';
 
   main.innerHTML =
     '<h2 class="dash-title">대시보드</h2>' +
     '<div class="dash-kpis">' + kpisHtml + '</div>' +
     '<div class="dash-row">' +
-      '<div class="dash-card"><h4>인기 제품 TOP 10 (이번 달) ' + dashSampleTag() + '</h4>' + topHtml + '</div>' +
-      '<div class="dash-card"><h4>기간별 견적 추이 ' + dashSampleTag() + '</h4>' + trendSvg + '</div>' +
+      '<div class="dash-card"><h4>인기 제품 TOP 10 (이번 달) ' + dashLiveTag() + '</h4>' + topHtml + '</div>' +
+      '<div class="dash-card"><h4>기간별 견적 추이 (최근 14일) ' + dashLiveTag() + '</h4>' + trendSvg + '</div>' +
     '</div>' +
     '<div class="dash-row">' +
       '<div class="dash-card"><h4>카테고리별 비중 ' + dashLiveTag() + '</h4>' + catBarsHtml + '</div>' +
-      '<div class="dash-card"><h4>공간 유형별 설계 빈도 ' + dashSampleTag() + '</h4>' + spaceHtml + '</div>' +
+      '<div class="dash-card"><h4>공간 유형별 설계 빈도 ' + dashLiveTag() + '</h4>' + spaceHtml + '</div>' +
     '</div>' +
-    '<p class="dash-note">※ "실데이터" 표시가 없는 항목은 아직 견적/고객 이력을 저장하는 서버가 없어 예시로 채운 샘플 수치입니다. 실제 데이터 연동이 필요하시면 말씀해주세요.</p>';
+    '<p class="dash-note">※ "카테고리별 비중"을 제외한 항목은 인쇄/PDF 저장 버튼을 누른 시점을 견적 1건으로 집계한 실제 데이터입니다. ' +
+    '이번 업데이트 이후 발생하는 견적부터 기록되므로 초기에는 값이 0으로 표시될 수 있습니다. ' +
+    '"신규 고객"은 로그인 계정이 아닌 브라우저별 익명 식별자를 기준으로 한 추정치이며, 브라우저를 바꾸거나 쿠키를 지우면 다른 고객으로 집계될 수 있습니다.' +
+    capNote + '</p>';
 }
 
 function renderAdminDashboard(){
