@@ -98,7 +98,7 @@
     outline:none;
   }
   .spacebar input[type=text]:focus{border-color:var(--amber);}
-  #buildingInput{width:150px;}
+  #buildingInput{width:200px;}
       .room-chips{
         display:flex;
     gap:6px;
@@ -155,10 +155,27 @@
 }
 
   .layout{
-        max-width:1180px;
+    max-width:1560px;
     margin:0 auto;
     padding:24px 24px 90px;
-}
+    display:flex;
+    gap:24px;
+    align-items:flex-start;
+  }
+  .layout-left{
+    flex:1;
+    min-width:0;
+  }
+  .layout-right{
+    width:460px;
+    flex:none;
+    position:sticky;
+    top:20px;
+  }
+  @media (max-width:1100px){
+    .layout{flex-direction:column;}
+    .layout-right{width:100%;position:static;}
+  }
 
   .toolbar{
         display:flex;
@@ -309,7 +326,13 @@
   .stat b{display:block;font-size:15px;font-weight:600;}
   .stat span{font-size:10px;color:#9FB2C2;}
 
-  table.qtable{width:100%;border-collapse:collapse;background:#fff;border:1.5px solid var(--ink);}
+  #quoteWrap{overflow-x:auto;}
+  table.qtable{width:100%;min-width:640px;border-collapse:collapse;background:#fff;border:1.5px solid var(--ink);}
+  @media screen{
+    .layout-right .col-spec,
+    .layout-right .col-g2b{ display:none; }
+    .layout-right table.qtable{ min-width:0; }
+  }
     table.qtable thead th{
         font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
     text-transform:uppercase;letter-spacing:.3px;color:var(--paper);
@@ -466,7 +489,8 @@
       @media print{
         .titleblock, .spacebar, .toolbar, .count-line, #grid, #pagination,
     .toast, #adminTrigger, #adminOverlay, #lockOverlay{ display:none !important; }
-    .layout{ max-width:none; margin:0; padding:0; }
+    .layout{ max-width:none; margin:0; padding:0; display:block; }
+    .layout-right{ width:auto; position:static; }
     .print-header{ display:block; margin-bottom:18px; }
     .no-print{ display:none !important; }
     .qty-ctrl button, .row-remove{ display:none !important; }
@@ -488,8 +512,8 @@
       </div>
 
       <div class="spacebar">
-        <label>건물명</label>
-        <input type="text" id="buildingInput" value="행복청사" class="mono">
+        <label>현장명</label>
+        <input type="text" id="buildingInput" placeholder="현장명을 입력하세요 (예: OO청사 리모델링)" class="mono">
         <div class="room-chips" id="roomChips"></div>
         <div class="add-room-form">
           <input type="text" id="newFloor" placeholder="층 (예 3층)" class="mono">
@@ -500,6 +524,8 @@
       </div>
 
       <div class="layout">
+
+      <div class="layout-left">
 
         <div class="toolbar">
           <div class="search-wrap">
@@ -536,6 +562,9 @@
         <div class="grid" id="grid"></div>
         <div class="pagination" id="pagination"></div>
 
+      </div>
+
+      <div class="layout-right">
         <div id="printArea">
           <div class="print-header" id="printHeader">
             <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:20px;">FOMERS 견적서</div>
@@ -555,6 +584,7 @@
           <div id="quoteWrap"></div>
           <p class="quote-note">데모 버전 · 실제 계약가/재고 확인 후 정식 견적서로 전환됩니다</p>
         </div>
+      </div>
 
       </div>
 
@@ -982,7 +1012,7 @@ function renderQuote(){
     wrap.innerHTML = '<div class="empty-quote">공간을 추가하고 카탈로그에서 품목을 담아주세요</div>';
   } else {
     var html = '<table class="qtable"><thead><tr>' +
-      '<th>코드</th><th>이미지</th><th>품목</th><th>규격</th><th>수량</th><th>단가</th><th>총금액</th><th>G2B번호</th><th></th>' +
+      '<th>코드</th><th>이미지</th><th>품목</th><th class="col-spec">규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
       '</tr></thead><tbody>';
 
     floors.forEach(function(floor){
@@ -1009,11 +1039,11 @@ function renderQuote(){
                               '<td class="row-code">' + p.code + '</td>' +
                               '<td><div class="row-thumb" data-thumb-code="' + code + '">' + IMG_ICON + '</div></td>' +
                               '<td>' + p.name + '</td>' +
-                              '<td class="mono" style="font-size:11px;color:var(--ink-3);">' + p.spec + '</td>' +
+                              '<td class="mono col-spec" style="font-size:11px;color:var(--ink-3);">' + p.spec + '</td>' +
                               '<td><div class="qty-ctrl"><button data-a="-1">−</button><input class="qty-input mono" type="number" min="1" value="' + qty + '" style="width:40px;text-align:center;border:1px solid var(--line);font-family:\'IBM Plex Mono\',monospace;font-size:11.5px;padding:2px;"><button data-a="1">+</button></div></td>' +
                               '<td class="row-price">' + fmt(p.price) + '</td>' +
                               '<td class="row-total">' + fmt(lineTotal) + '</td>' +
-                              '<td class="row-g2b">' + p.g2b + '</td>' +
+                              '<td class="row-g2b col-g2b">' + p.g2b + '</td>' +
                               '<td><button class="row-remove">삭제</button></td>' +
                             '</tr>';
               });
