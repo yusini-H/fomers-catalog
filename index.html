@@ -167,7 +167,7 @@
     min-width:0;
   }
   .layout-right{
-    width:460px;
+    width:480px;
     flex:none;
     position:sticky;
     top:20px;
@@ -330,8 +330,42 @@
   table.qtable{width:100%;min-width:640px;border-collapse:collapse;background:#fff;border:1.5px solid var(--ink);}
   @media screen{
     .layout-right .col-g2b{ display:none; }
-    .layout-right table.qtable{ min-width:400px; }
-    .layout-right table.qtable td.row-code{ max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+    .layout-right table.qtable{ min-width:0; }
+    .layout-right table.qtable thead{ display:none; }
+
+    /* 담긴 품목 행: 좁은 사이드바에서도 품목/규격/수량/금액이 한눈에 보이도록
+       표 형태 대신 카드형(그리드) 레이아웃으로 표시합니다. */
+    .layout-right table.qtable tbody tr[data-room-id]{
+      display:grid;
+      grid-template-columns:28px 62px 1fr auto;
+      grid-template-areas:
+        "thumb code name remove"
+        "spec  spec spec spec"
+        "qty   qty  price total";
+      column-gap:8px;
+      row-gap:6px;
+      align-items:center;
+      padding:10px 8px;
+      border-bottom:1px solid var(--paper-dim);
+    }
+    .layout-right table.qtable tbody tr[data-room-id] > td{
+      display:block;padding:0;border:none;
+    }
+    .layout-right table.qtable tbody tr[data-room-id] .row-thumb-cell{ grid-area:thumb; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-code{
+      grid-area:code;max-width:none;align-self:center;
+      font-size:10px;color:var(--amber-dark);background:var(--paper-dim);
+      padding:2px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-name{
+      grid-area:name;align-self:center;font-weight:600;font-size:13px;
+    }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-remove-cell{ grid-area:remove;align-self:start;text-align:right; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-spec{ grid-area:spec;display:flex;flex-direction:column;gap:3px; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-qty{ grid-area:qty;display:flex;flex-direction:column;gap:3px; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-price{ grid-area:price;display:flex;flex-direction:column;gap:2px; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-total{ grid-area:total;display:flex;flex-direction:column;gap:2px;align-items:flex-end; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-g2b.col-g2b{ display:none; }
   }
     table.qtable thead th{
         font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
@@ -349,24 +383,33 @@
         background:var(--paper-dim);font-family:'IBM Plex Mono',monospace;
     font-size:11.5px;color:var(--ink-3);font-weight:600;padding:6px 8px;
 }
-  .row-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber-dark);}
+    .row-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber-dark);}
   .row-g2b{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);}
-  .row-name{min-width:90px;word-break:keep-all;overflow-wrap:break-word;}
-  .row-name p{margin:0 0 4px;font-size:13px;line-height:1.3;}
-  .spec-input{display:block;width:100%;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);border:1px solid var(--line);background:#F7F4EC;padding:3px 5px;}
+  .row-name{word-break:keep-all;overflow-wrap:break-word;font-size:13px;}
+  .field-label{
+    font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;
+    color:var(--ink-3);text-transform:uppercase;letter-spacing:.3px;
+  }
+  .field-value{font-family:'IBM Plex Mono',monospace;font-size:12.5px;white-space:nowrap;}
+  .row-total-amt{font-weight:700;font-size:13.5px;color:var(--ink);}
+  .spec-input{
+    display:block;width:100%;box-sizing:border-box;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);
+    border:1px solid var(--line);background:#F7F4EC;padding:4px 5px;
+  }
   .spec-input:focus{border-color:var(--amber);background:#fff;outline:none;}
   .spec-input::placeholder{color:#B7ACA0;}
+  .qty-input{
+    width:64px;box-sizing:border-box;text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);
+    border:1px solid var(--line);background:#fff;padding:4px 5px;
+  }
+  .qty-input:focus{border-color:var(--amber);outline:none;}
   .row-price,.row-total{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   .row-total{font-weight:600;}
   .row-thumb{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:center;}
   .row-thumb svg{width:14px;height:14px;stroke:var(--ink-3);}
-  .qty-ctrl{display:inline-flex;align-items:center;gap:6px;background:var(--paper-dim);padding:2px;}
-  .qty-ctrl button{
-        width:18px;height:18px;background:var(--ink-3);color:var(--paper);border:none;
-    font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer;line-height:1;
-}
-  .qty-ctrl span{font-family:'IBM Plex Mono',monospace;font-size:11.5px;min-width:16px;text-align:center;display:inline-block;}
-  .row-remove{background:none;border:none;color:var(--rust);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;}
+  .row-remove{background:none;border:none;color:var(--rust);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;}
   .row-remove:hover{color:var(--rust-dark);}
   .subtot-room td{
         background:#F4F1E8;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
@@ -497,11 +540,13 @@
     .layout{ max-width:none; margin:0; padding:0; display:block; }
     .layout-right{ width:auto; position:static; }
     .print-header{ display:block; margin-bottom:18px; }
-    .no-print{ display:none !important; }
-    .qty-ctrl button, .row-remove{ display:none !important; }
+        .no-print{ display:none !important; }
+    .row-remove{ display:none !important; }
     .quote-head{ border-top:none; }
     .spec-input{ border:none;background:transparent;padding:0;color:var(--ink-3); }
-      }
+    .qty-input{ border:none;background:transparent;padding:0;color:var(--ink);text-align:left;width:auto; }
+    .field-label{ display:none; }
+  }
 </style>
       </head>
       <body>
@@ -1032,57 +1077,57 @@ function renderQuote(){
   if(state.rooms.length === 0 || floors.length === 0){
     wrap.innerHTML = '<div class="empty-quote">공간을 추가하고 카탈로그에서 품목을 담아주세요</div>';
   } else {
-    var html = '<table class="qtable"><thead><tr>' +
-      '<th>코드</th><th>이미지</th><th>품목 / 규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
+        var html = '<table class="qtable"><thead><tr>' +
+      '<th>코드</th><th>이미지</th><th>품목</th><th>규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
       '</tr></thead><tbody>';
 
     floors.forEach(function(floor){
-            var floorTotal = 0, floorHasRows = false;
+      var floorTotal = 0, floorHasRows = false;
       var floorRoomsHtml = '';
 
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
-                var codes = Object.keys(room.items);
+        var codes = Object.keys(room.items);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room"><td colspan="8">' + room.name + '</td></tr>';
+        var roomHtml = '<tr class="grp-room"><td colspan="9">' + room.name + '</td></tr>';
 
         if(codes.length === 0){
-          roomHtml += '<tr><td colspan="8" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
+          roomHtml += '<tr><td colspan="9" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
         } else {
           roomsWithItems++;
           codes.forEach(function(code){
-                        var p = findProduct(code);
+            var p = findProduct(code);
             var qty = room.items[code];
             var lineTotal = p.price * qty;
             roomTotal += lineTotal;
             grandQty += qty;
             var specVal = (room.specOverrides && room.specOverrides[code] !== undefined) ? room.specOverrides[code] : p.spec;
             roomHtml +=
-                            '<tr data-room-id="' + room.id + '" data-code="' + code + '">' +
-                              '<td class="row-code">' + p.code + '</td>' +
-                              '<td><div class="row-thumb" data-thumb-code="' + code + '">' + IMG_ICON + '</div></td>' +
-                              '<td class="row-name"><p>' + p.name + '</p><input class="spec-input mono" type="text" value="' + specVal.replace(/"/g,'&quot;') + '" placeholder="규격/사이즈 입력"></td>' +
-                              
-                              '<td><div class="qty-ctrl"><button data-a="-1">−</button><input class="qty-input mono" type="number" min="1" value="' + qty + '" style="width:40px;text-align:center;border:1px solid var(--line);font-family:\'IBM Plex Mono\',monospace;font-size:11.5px;padding:2px;"><button data-a="1">+</button></div></td>' +
-                              '<td class="row-price">' + fmt(p.price) + '</td>' +
-                              '<td class="row-total">' + fmt(lineTotal) + '</td>' +
-                              '<td class="row-g2b col-g2b">' + p.g2b + '</td>' +
-                              '<td><button class="row-remove">삭제</button></td>' +
-                            '</tr>';
-              });
-              }
-                      roomHtml += '<tr class="subtot-room"><td colspan="8">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
+              '<tr data-room-id="' + room.id + '" data-code="' + code + '">' +
+                '<td class="row-code">' + p.code + '</td>' +
+                '<td class="row-thumb-cell"><div class="row-thumb" data-thumb-code="' + code + '">' + IMG_ICON + '</div></td>' +
+                '<td class="row-name">' + p.name + '</td>' +
+                '<td class="row-spec"><span class="field-label">규격</span><input class="spec-input mono" type="text" value="' + specVal.replace(/"/g,'&quot;') + '" placeholder="규격/사이즈 입력"></td>' +
+                '<td class="row-qty"><span class="field-label">수량</span><input class="qty-input mono" type="number" min="1" value="' + qty + '"></td>' +
+                '<td class="row-price"><span class="field-label">단가</span><span class="field-value">' + fmt(p.price) + '</span></td>' +
+                '<td class="row-total"><span class="field-label">총금액</span><span class="field-value row-total-amt">' + fmt(lineTotal) + '</span></td>' +
+                '<td class="row-g2b col-g2b">' + p.g2b + '</td>' +
+                '<td class="row-remove-cell"><button class="row-remove">삭제</button></td>' +
+              '</tr>';
+          });
+        }
+        roomHtml += '<tr class="subtot-room"><td colspan="9">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
         floorTotal += roomTotal;
         floorHasRows = true;
         floorRoomsHtml += roomHtml;
-        });
-
-      html += '<tr class="grp-floor"><td colspan="8">' + floor + '</td></tr>';
-      html += floorRoomsHtml;
-      html += '<tr class="subtot-floor"><td colspan="8">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr>';
-      grandTotal += floorTotal;
       });
 
-    html += '<tr class="grand-total"><td colspan="8">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr>';
+      html += '<tr class="grp-floor"><td colspan="9">' + floor + '</td></tr>';
+      html += floorRoomsHtml;
+      html += '<tr class="subtot-floor"><td colspan="9">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr>';
+      grandTotal += floorTotal;
+    });
+
+    html += '<tr class="grand-total"><td colspan="9">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr>';
     html += '</tbody></table>';
     wrap.innerHTML = html;
 
@@ -1091,14 +1136,6 @@ function renderQuote(){
       if(p) fillThumbWithFallback(thumbEl, productImgCandidates(p));
     });
 
-    wrap.querySelectorAll('.qty-ctrl button').forEach(function(btn){
-            btn.onclick = function(){
-        var row = btn.closest('tr');
-        var roomId = row.getAttribute('data-room-id');
-        var code = row.getAttribute('data-code');
-        if(roomId) changeQty(roomId, code, parseInt(btn.getAttribute('data-a'),10));
-            };
-    });
     wrap.querySelectorAll('.qty-input').forEach(function(inp){
             var row = inp.closest('tr');
       var roomId = row.getAttribute('data-room-id');
