@@ -686,6 +686,59 @@
     .qty-input{ border:none;background:transparent;padding:0;color:var(--ink);text-align:left;width:auto; }
     .field-label{ display:none; }
   }
+
+  /* ── 하단 푸터 (사업자 정보) ── */
+  .site-footer{
+    margin-top:40px;
+    border-top:1px solid var(--line);
+    background:var(--paper-dim);
+  }
+  .footer-inner{
+    max-width:1720px;
+    margin:0 auto;
+    padding:26px 28px 30px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .footer-info p{
+    margin:0 0 6px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-3);
+    line-height:1.7;
+  }
+  .footer-info p:last-child{ margin-bottom:0; }
+  .footer-name{
+    font-family:'Archivo',sans-serif !important;
+    font-size:13px !important;
+    font-weight:700;
+    color:var(--ink-2) !important;
+    letter-spacing:.2px;
+  }
+  .footer-name span{
+    font-family:'IBM Plex Mono',monospace;
+    font-weight:400;
+    font-size:11px;
+    color:var(--ink-3);
+    margin-left:10px;
+  }
+  .footer-info a{ color:var(--teal); text-decoration:none; }
+  .footer-info a:hover{ text-decoration:underline; }
+  .footer-copy{ padding-top:6px; color:#8DA0AF; }
+  /* 관리자 로그인 진입점 — 일반 방문자에게는 그냥 로고 텍스트로만 보이며,
+     의도적으로 버튼처럼 보이는 스타일(테두리/배경/커서 변화 등)을 주지 않았습니다. */
+  .footer-logo{
+    font-family:'Archivo',sans-serif;
+    font-weight:800;
+    font-size:22px;
+    letter-spacing:.5px;
+    color:var(--ink-3);
+    opacity:.55;
+    user-select:none;
+  }
 </style>
 </head>
 <body>
@@ -701,10 +754,6 @@
   <div class="wordmark">FOMERS<span>다수공급자계약 통합 카탈로그</span></div>
   <div style="display:flex;align-items:center;gap:16px;">
     <div class="stamp">계약처 · 조달청 나라장터<br>DOC NO. G2B-MAS-2026</div>
-    <button class="admin-login-btn" id="adminTrigger" type="button">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="13" height="13"><rect x="5" y="11" width="14" height="9" rx="1"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>
-      관리자 로그인
-    </button>
   </div>
 </div>
 
@@ -795,6 +844,19 @@
   </div>
 
 </div>
+
+<footer class="site-footer no-print">
+  <div class="footer-inner">
+    <div class="footer-info">
+      <p class="footer-name">친환경사무용가구 포머스 <span>대표 : 강준기</span> <span>사업자등록번호 : 515-81-36523</span></p>
+      <p>[본사] 우.38405 경상북도 경산시 와촌면 불금길 29 &nbsp; T. (053) 981-8806~7 &nbsp; F. (053) 851-2002</p>
+      <p>[지사] 우.06551 서울특별시 서초구 동작대로 226 &nbsp; T. (02)532-6304~5 &nbsp; F. (02)532-6383</p>
+      <p><a href="http://www.fomers.co.kr" target="_blank" rel="noopener">http://www.fomers.co.kr</a></p>
+      <p class="footer-copy">© 2017 BY FOMERS. ALL RIGHTS RESERVED.</p>
+    </div>
+    <div class="footer-logo" id="adminTrigger">Fomers</div>
+  </div>
+</footer>
 
 </div><!-- /#catalogView -->
 
