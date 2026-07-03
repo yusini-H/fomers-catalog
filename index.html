@@ -329,9 +329,9 @@
   #quoteWrap{overflow-x:auto;}
   table.qtable{width:100%;min-width:640px;border-collapse:collapse;background:#fff;border:1.5px solid var(--ink);}
   @media screen{
-    .layout-right .col-spec,
     .layout-right .col-g2b{ display:none; }
-    .layout-right table.qtable{ min-width:0; }
+    .layout-right table.qtable{ min-width:400px; }
+    .layout-right table.qtable td.row-code{ max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
   }
     table.qtable thead th{
         font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
@@ -351,6 +351,11 @@
 }
   .row-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber-dark);}
   .row-g2b{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);}
+  .row-name{min-width:90px;word-break:keep-all;overflow-wrap:break-word;}
+  .row-name p{margin:0 0 4px;font-size:13px;line-height:1.3;}
+  .spec-input{display:block;width:100%;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);border:1px solid var(--line);background:#F7F4EC;padding:3px 5px;}
+  .spec-input:focus{border-color:var(--amber);background:#fff;outline:none;}
+  .spec-input::placeholder{color:#B7ACA0;}
   .row-price,.row-total{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   .row-total{font-weight:600;}
   .row-thumb{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:center;}
@@ -495,6 +500,7 @@
     .no-print{ display:none !important; }
     .qty-ctrl button, .row-remove{ display:none !important; }
     .quote-head{ border-top:none; }
+    .spec-input{ border:none;background:transparent;padding:0;color:var(--ink-3); }
       }
 </style>
       </head>
@@ -725,8 +731,8 @@ var state = {
     page: 1,
     pageSize: 20,
     rooms: [
-  {id:"r1", floor:"3층", name:"교무실", items:{}},
-{id:"r2", floor:"2층", name:"음악실", items:{}}
+  {id:"r1", floor:"3층", name:"교무실", items:{}, specOverrides:{}},
+{id:"r2", floor:"2층", name:"음악실", items:{}, specOverrides:{}}
   ],
   activeRoomId: "r1"
     };
@@ -958,7 +964,7 @@ document.getElementById('addRoomBtn').addEventListener('click', function(){
   var n = document.getElementById('newRoom').value.trim();
   if(!f || !n){ showToast('층과 실명을 모두 입력해주세요'); return; }
   var id = 'r' + (roomSeq++);
-  state.rooms.push({id:id, floor:f, name:n, items:{}});
+  state.rooms.push({id:id, floor:f, name:n, items:{}, specOverrides:{}});
   state.activeRoomId = id;
   document.getElementById('newFloor').value = '';
       document.getElementById('newRoom').value = '';
@@ -992,9 +998,24 @@ function setQty(roomId, code, value){
 }
 
 function removeItem(roomId, code){
-    var room = findRoom(roomId);
+  var room = findRoom(roomId);
   if(!room) return;
   delete room.items[code];
+  if(room.specOverrides) delete room.specOverrides[code];
+  renderQuote();
+}
+
+function setSpec(roomId, code, value){
+  var room = findRoom(roomId);
+  if(!room) return;
+  if(!room.specOverrides) room.specOverrides = {};
+  var p = findProduct(code);
+  var trimmed = value.trim();
+  if(trimmed === '' || (p && trimmed === p.spec)){
+    delete room.specOverrides[code];
+  } else {
+    room.specOverrides[code] = trimmed;
+  }
   renderQuote();
 }
 
@@ -1012,7 +1033,7 @@ function renderQuote(){
     wrap.innerHTML = '<div class="empty-quote">공간을 추가하고 카탈로그에서 품목을 담아주세요</div>';
   } else {
     var html = '<table class="qtable"><thead><tr>' +
-      '<th>코드</th><th>이미지</th><th>품목</th><th class="col-spec">규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
+      '<th>코드</th><th>이미지</th><th>품목 / 규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
       '</tr></thead><tbody>';
 
     floors.forEach(function(floor){
@@ -1022,10 +1043,10 @@ function renderQuote(){
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
                 var codes = Object.keys(room.items);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room"><td colspan="9">' + room.name + '</td></tr>';
+        var roomHtml = '<tr class="grp-room"><td colspan="8">' + room.name + '</td></tr>';
 
         if(codes.length === 0){
-          roomHtml += '<tr><td colspan="9" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
+          roomHtml += '<tr><td colspan="8" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
         } else {
           roomsWithItems++;
           codes.forEach(function(code){
@@ -1034,12 +1055,13 @@ function renderQuote(){
             var lineTotal = p.price * qty;
             roomTotal += lineTotal;
             grandQty += qty;
+            var specVal = (room.specOverrides && room.specOverrides[code] !== undefined) ? room.specOverrides[code] : p.spec;
             roomHtml +=
                             '<tr data-room-id="' + room.id + '" data-code="' + code + '">' +
                               '<td class="row-code">' + p.code + '</td>' +
                               '<td><div class="row-thumb" data-thumb-code="' + code + '">' + IMG_ICON + '</div></td>' +
-                              '<td>' + p.name + '</td>' +
-                              '<td class="mono col-spec" style="font-size:11px;color:var(--ink-3);">' + p.spec + '</td>' +
+                              '<td class="row-name"><p>' + p.name + '</p><input class="spec-input mono" type="text" value="' + specVal.replace(/"/g,'&quot;') + '" placeholder="규격/사이즈 입력"></td>' +
+                              
                               '<td><div class="qty-ctrl"><button data-a="-1">−</button><input class="qty-input mono" type="number" min="1" value="' + qty + '" style="width:40px;text-align:center;border:1px solid var(--line);font-family:\'IBM Plex Mono\',monospace;font-size:11.5px;padding:2px;"><button data-a="1">+</button></div></td>' +
                               '<td class="row-price">' + fmt(p.price) + '</td>' +
                               '<td class="row-total">' + fmt(lineTotal) + '</td>' +
@@ -1048,19 +1070,19 @@ function renderQuote(){
                             '</tr>';
               });
               }
-                      roomHtml += '<tr class="subtot-room"><td colspan="9">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
+                      roomHtml += '<tr class="subtot-room"><td colspan="8">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
         floorTotal += roomTotal;
         floorHasRows = true;
         floorRoomsHtml += roomHtml;
         });
 
-      html += '<tr class="grp-floor"><td colspan="9">' + floor + '</td></tr>';
+      html += '<tr class="grp-floor"><td colspan="8">' + floor + '</td></tr>';
       html += floorRoomsHtml;
-      html += '<tr class="subtot-floor"><td colspan="9">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr>';
+      html += '<tr class="subtot-floor"><td colspan="8">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr>';
       grandTotal += floorTotal;
       });
 
-    html += '<tr class="grand-total"><td colspan="9">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr>';
+    html += '<tr class="grand-total"><td colspan="8">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr>';
     html += '</tbody></table>';
     wrap.innerHTML = html;
 
@@ -1084,6 +1106,14 @@ function renderQuote(){
       function commit(){ setQty(roomId, code, inp.value); }
       inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') commit(); });
       inp.addEventListener('blur', commit);
+    });
+    wrap.querySelectorAll('.spec-input').forEach(function(inp){
+      var row = inp.closest('tr');
+      var roomId = row.getAttribute('data-room-id');
+      var code = row.getAttribute('data-code');
+      function commitSpec(){ setSpec(roomId, code, inp.value); }
+      inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ inp.blur(); } });
+      inp.addEventListener('blur', commitSpec);
     });
     wrap.querySelectorAll('.row-remove').forEach(function(btn){
             btn.onclick = function(){
