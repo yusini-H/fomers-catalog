@@ -12,16 +12,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
-    --paper:#ECE7DA;
-    --paper-dim:#E1DBCA;
-    --ink:#1B2A38;
-    --ink-2:#243B4D;
-    --ink-3:#2E4258;
-    --line:#B9B0A2;
+    --paper:#F7F9FB;
+    --paper-dim:#EEF2F6;
+    --surface:#FFFFFF;
+    --ink:#132A3A;
+    --ink-2:#1D3C52;
+    --ink-3:#51677A;
+    --line:#DCE3EA;
     --amber:#D9910C;
     --amber-dark:#8A5A06;
     --teal:#2D8FCC;
     --teal-dark:#1B6699;
+    --teal-light:#EAF4FB;
     --rust:#B23A2E;
     --rust-dark:#6E231C;
   }
@@ -41,7 +43,7 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    border-bottom:4px solid var(--amber);
+    border-bottom:4px solid var(--teal);
     flex-wrap:wrap;
     gap:10px;
   }
@@ -97,7 +99,7 @@
     padding:7px 10px;
     outline:none;
   }
-  .spacebar input[type=text]:focus{border-color:var(--amber);}
+  .spacebar input[type=text]:focus{border-color:var(--teal);}
   #buildingInput{width:200px;}
   .room-chips{
     display:flex;
@@ -116,16 +118,16 @@
     white-space:nowrap;
   }
   .room-chip.active{
-    background:var(--amber);
-    color:var(--ink);
-    border-color:var(--amber);
+    background:var(--teal);
+    color:#fff;
+    border-color:var(--teal);
     font-weight:600;
   }
   .room-chip .x{
     margin-left:6px;
     color:#8CA0B0;
   }
-  .room-chip.active .x{color:var(--ink);}
+  .room-chip.active .x{color:#fff;}
   .room-chip.pending-remove{background:var(--rust);color:#fff;border-color:var(--rust-dark);}
   .room-chip.pending-remove .x{color:#fff;font-weight:600;}
   .add-room-form{
@@ -150,7 +152,7 @@
     margin-left:auto;
     font-family:'IBM Plex Mono',monospace;
     font-size:11px;
-    color:var(--amber);
+    color:#7FC4EE;
     white-space:nowrap;
   }
 
@@ -167,8 +169,9 @@
     flex:none;
     position:sticky;
     top:20px;
-    background:#fff;
-    border:1.5px solid var(--ink);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
     padding:16px 14px;
     max-height:calc(100vh - 40px);
     overflow-y:auto;
@@ -198,10 +201,10 @@
   /* ── 좌측 사이드바 (카테고리 · 인증필터 · 즐겨찾기 · 최근 사용) ── */
   .sidebar-search{margin-bottom:16px;}
   .sidebar-search input{
-    width:100%;padding:9px 10px;border:1.5px solid var(--ink);
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;
     font-family:'IBM Plex Sans KR',sans-serif;font-size:12.5px;outline:none;box-sizing:border-box;
   }
-  .sidebar-search input:focus{border-color:var(--amber);}
+  .sidebar-search input:focus{border-color:var(--teal);}
   .sidebar-section{margin-bottom:18px;}
   .sidebar-title{
     font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
@@ -215,10 +218,11 @@
     font-family:'IBM Plex Mono',monospace;font-size:11.5px;
     border:none;background:transparent;color:var(--ink);cursor:pointer;
   }
+  .sidebar-cat-btn{border-radius:6px;}
   .sidebar-cat-btn:hover{background:var(--paper-dim);}
-  .sidebar-cat-btn.active{background:var(--ink);color:var(--paper);}
+  .sidebar-cat-btn.active{background:var(--teal-light);color:var(--teal-dark);font-weight:600;}
   .sidebar-cat-btn .n{color:var(--ink-3);font-size:10px;}
-  .sidebar-cat-btn.active .n{color:#9FB2C2;}
+  .sidebar-cat-btn.active .n{color:var(--teal-dark);}
   .sidebar-cert-btn{
     display:flex;align-items:center;gap:7px;
     width:100%;text-align:left;padding:6px 8px;
@@ -239,7 +243,7 @@
     cursor:pointer;white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis;
   }
   .sidebar-chip:hover{border-color:var(--teal);color:var(--teal-dark);}
-  .sidebar-empty{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#B7ACA0;}
+  .sidebar-empty{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9AA7B2;}
 
   .toolbar{
     display:flex;
@@ -255,14 +259,14 @@
   .search-wrap input{
     width:100%;
     padding:11px 14px 11px 36px;
-    border:1.5px solid var(--ink);
-    background:#fff;
+    border:1px solid var(--line);
+    background:var(--surface);
     font-family:'IBM Plex Sans KR',sans-serif;
     font-size:14px;
     color:var(--ink);
     outline:none;
   }
-  .search-wrap input:focus{border-color:var(--amber);}
+  .search-wrap input:focus{border-color:var(--teal);}
   .search-wrap::before{
     content:"";
     position:absolute;
@@ -289,13 +293,14 @@
     font-family:'IBM Plex Mono',monospace;
     font-size:12px;
     padding:9px 14px;
-    border:1.5px solid var(--ink);
-    background:transparent;
+    border:1px solid var(--line);
+    border-radius:6px;
+    background:var(--surface);
     color:var(--ink);
     cursor:pointer;
     letter-spacing:.3px;
   }
-  .filter-pill.active{background:var(--ink);color:var(--paper);}
+  .filter-pill.active{background:var(--teal);color:#fff;border-color:var(--teal);}
 
   .count-line{
     font-family:'IBM Plex Mono',monospace;
@@ -316,14 +321,18 @@
   }
 
   .ticket{
-    background:#fff;
-    border:1.5px solid var(--ink);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
     position:relative;
     padding:12px 12px 12px;
     display:flex;
     flex-direction:column;
     gap:7px;
+    box-shadow:0 1px 2px rgba(19,42,58,.04);
+    transition:border-color .15s, box-shadow .15s;
   }
+  .ticket:hover{border-color:var(--teal);box-shadow:0 4px 14px rgba(45,143,204,.12);}
   .ticket::before{
     content:"";
     position:absolute;
@@ -332,12 +341,12 @@
     width:10px;
     height:10px;
     background:var(--paper);
-    border:1.5px solid var(--ink);
+    border:1px solid var(--line);
     border-top:none;
     border-radius:0 0 8px 8px;
   }
   .ticket-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;padding-right:26px;}
-  .ticket-code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--amber-dark);font-weight:600;}
+  .ticket-code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--teal-dark);font-weight:600;}
   .ticket-g2b{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);}
   .ticket-body{display:flex;flex-direction:column;gap:8px;}
   .thumb{
@@ -378,14 +387,14 @@
   .ticket-price span{font-size:10.5px;color:var(--ink-3);font-weight:400;margin-right:2px;}
   .add-btn{
     font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;
-    padding:7px 11px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;
+    padding:7px 11px;background:var(--teal);color:#fff;border:none;border-radius:6px;cursor:pointer;
   }
   .add-btn:hover{background:var(--teal-dark);}
   .add-btn:active{transform:scale(.97);}
 
   .quote-head{
     display:flex;justify-content:space-between;align-items:flex-end;
-    border-top:4px solid var(--amber);padding-top:16px;margin-bottom:14px;
+    border-top:4px solid var(--teal);padding-top:16px;margin-bottom:14px;
     flex-wrap:wrap;gap:10px;
   }
   .quote-head h2{
@@ -394,16 +403,18 @@
   }
   .quote-stats{display:flex;gap:10px;flex-wrap:wrap;}
   .stat{
-    background:var(--ink);color:var(--paper);padding:10px 16px;
-    font-family:'IBM Plex Mono',monospace;border-radius:7px;min-width:88px;
+    background:var(--surface);color:var(--ink);padding:10px 16px;
+    font-family:'IBM Plex Mono',monospace;border-radius:8px;min-width:88px;
+    border:1px solid var(--line);
   }
-  .stat b{display:block;font-size:18px;font-weight:600;}
-  .stat span{font-size:10px;color:#9FB2C2;}
-  .stat-em{background:var(--teal);}
-  .stat-em span{color:#E7F3FA;}
+  .stat b{display:block;font-size:18px;font-weight:700;color:var(--ink);}
+  .stat span{font-size:10px;color:var(--ink-3);}
+  .stat-em{background:var(--teal-light);border-color:var(--teal);}
+  .stat-em b{color:var(--teal-dark);}
+  .stat-em span{color:var(--teal-dark);}
 
   #quoteWrap{overflow-x:auto;}
-  table.qtable{width:100%;min-width:640px;border-collapse:collapse;background:#fff;border:1.5px solid var(--ink);}
+  table.qtable{width:100%;min-width:640px;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;}
   @media screen{
     .layout-right .col-g2b{ display:none; }
     .layout-right table.qtable{ min-width:0; }
@@ -430,7 +441,7 @@
     .layout-right table.qtable tbody tr[data-room-id] .row-thumb-cell{ grid-area:thumb; }
     .layout-right table.qtable tbody tr[data-room-id] td.row-code{
       grid-area:code;max-width:none;align-self:center;
-      font-size:10px;color:var(--amber-dark);background:var(--paper-dim);
+      font-size:10px;color:var(--teal-dark);background:var(--paper-dim);
       padding:2px 4px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
     .layout-right table.qtable tbody tr[data-room-id] td.row-name{
@@ -459,7 +470,7 @@
     background:var(--paper-dim);font-family:'IBM Plex Mono',monospace;
     font-size:11.5px;color:var(--ink-3);font-weight:600;padding:6px 8px;
   }
-  .row-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--amber-dark);}
+  .row-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-dark);}
   .row-g2b{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);}
   .row-name{word-break:keep-all;overflow-wrap:break-word;font-size:13px;}
   .field-label{
@@ -471,16 +482,16 @@
   .spec-input{
     display:block;width:100%;box-sizing:border-box;
     font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);
-    border:1px solid var(--line);background:#F7F4EC;padding:4px 5px;
+    border:1px solid var(--line);background:var(--paper-dim);padding:4px 5px;
   }
-  .spec-input:focus{border-color:var(--amber);background:#fff;outline:none;}
-  .spec-input::placeholder{color:#B7ACA0;}
+  .spec-input:focus{border-color:var(--teal);background:#fff;outline:none;}
+  .spec-input::placeholder{color:#A9B7C3;}
   .qty-input{
     width:64px;box-sizing:border-box;text-align:center;
     font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);
     border:1px solid var(--line);background:#fff;padding:4px 5px;
   }
-  .qty-input:focus{border-color:var(--amber);outline:none;}
+  .qty-input:focus{border-color:var(--teal);outline:none;}
   .row-price,.row-total{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   .row-total{font-weight:600;}
   .row-thumb{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:center;}
@@ -488,12 +499,12 @@
   .row-remove{background:none;border:none;color:var(--rust);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;}
   .row-remove:hover{color:var(--rust-dark);}
   .subtot-room td{
-    background:#F4F1E8;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    background:var(--paper-dim);font-family:'IBM Plex Mono',monospace;font-size:11.5px;
     color:var(--teal-dark);text-align:right;font-weight:600;padding:6px 8px;border-bottom:1px dashed var(--line);
   }
   .subtot-floor td{
-    background:#EADFC4;font-family:'IBM Plex Mono',monospace;font-size:12px;
-    color:var(--amber-dark);text-align:right;font-weight:600;padding:7px 8px;
+    background:#E3EBF2;font-family:'IBM Plex Mono',monospace;font-size:12px;
+    color:var(--ink-2);text-align:right;font-weight:600;padding:7px 8px;
   }
   tr.grand-total td{
     background:var(--ink);color:var(--paper);font-family:'IBM Plex Mono',monospace;
@@ -501,7 +512,7 @@
   }
   .empty-quote{
     padding:40px 20px;text-align:center;font-family:'IBM Plex Mono',monospace;
-    font-size:12px;color:var(--ink-3);background:#fff;border:1.5px dashed var(--line);
+    font-size:12px;color:var(--ink-3);background:var(--surface);border:1px dashed var(--line);border-radius:8px;
   }
   .quote-note{
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);
@@ -511,7 +522,7 @@
   .toast{
     position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
     background:var(--ink);color:var(--paper);font-family:'IBM Plex Mono',monospace;
-    font-size:12px;padding:10px 18px;border-left:4px solid var(--amber);
+    font-size:12px;padding:10px 18px;border-left:4px solid var(--teal);
     opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:50;
     white-space:nowrap;
   }
@@ -539,7 +550,7 @@
     cursor:pointer;
     white-space:nowrap;
   }
-  .admin-login-btn:hover{background:var(--ink-2);color:var(--paper);border-color:var(--amber);}
+  .admin-login-btn:hover{background:var(--ink-2);color:var(--paper);border-color:var(--teal);}
   .admin-overlay{
     display:none;
     position:fixed;inset:0;
@@ -550,8 +561,9 @@
   }
   .admin-overlay.show{display:flex;}
   .admin-panel{
-    background:#fff;
-    border:1.5px solid var(--ink);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
     width:100%;max-width:420px;
     padding:22px;
     position:relative;
@@ -559,7 +571,7 @@
   .admin-panel h3{
     font-family:'Archivo',sans-serif;font-size:16px;font-weight:800;
     margin:0 0 14px;letter-spacing:.3px;
-    border-bottom:3px solid var(--amber);padding-bottom:10px;
+    border-bottom:3px solid var(--teal);padding-bottom:10px;
   }
   .admin-close{
     position:absolute;top:14px;right:14px;
@@ -569,13 +581,13 @@
   .admin-close:hover{color:var(--rust);}
   .admin-pin-row{display:flex;gap:8px;margin-top:6px;}
   .admin-pin-row input{
-    flex:1;padding:10px 12px;border:1.5px solid var(--ink);
+    flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
     font-family:'IBM Plex Mono',monospace;font-size:14px;outline:none;letter-spacing:2px;
   }
-  .admin-pin-row input:focus{border-color:var(--amber);}
+  .admin-pin-row input:focus{border-color:var(--teal);}
   .admin-btn{
     font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:600;
-    padding:9px 14px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;
+    padding:9px 14px;background:var(--teal);color:#fff;border:none;border-radius:6px;cursor:pointer;
   }
   .admin-btn:hover{background:var(--teal-dark);}
   .admin-btn:disabled{opacity:.5;cursor:default;}
@@ -598,10 +610,10 @@
   }
   .pagination button{
     font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
-    padding:8px 14px;border:1.5px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;
+    padding:8px 14px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer;
   }
   .pagination button:disabled{opacity:.35;cursor:default;}
-  .pagination button:not(:disabled):hover{background:var(--ink);color:var(--paper);}
+  .pagination button:not(:disabled):hover{background:var(--teal);color:#fff;border-color:var(--teal);}
 
   .print-btn{
     font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;
@@ -610,12 +622,60 @@
   .print-btn:hover{background:var(--teal-dark);}
   .print-header{display:none;}
 
+  /* ── 관리자 대시보드 (로그인 후에만 접근 가능) ── */
+  .admin-top-tabs{
+    display:none;background:var(--surface);border-bottom:1px solid var(--line);
+    padding:10px 28px;gap:6px;align-items:center;
+  }
+  .admin-top-tabs.show{display:flex;}
+  .admin-tab-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    padding:8px 14px;border:none;border-radius:7px;background:transparent;color:var(--ink-3);cursor:pointer;
+  }
+  .admin-tab-btn.active{background:var(--ink);color:#fff;}
+  .admin-tab-btn:hover:not(.active){background:var(--paper-dim);}
+
+  #adminDashboardView{display:none;}
+  #adminDashboardView.show{display:flex;}
+  .dash-shell{display:flex;min-height:calc(100vh - 46px);background:var(--paper);width:100%;}
+  .dash-nav{width:220px;flex:none;background:var(--surface);border-right:1px solid var(--line);padding:20px 14px;}
+  .dash-nav .brand{font-family:'Archivo',sans-serif;font-weight:800;font-size:15px;color:var(--ink);margin:0 0 20px;padding:0 8px;}
+  .dash-nav-item{display:block;width:100%;text-align:left;padding:9px 10px;margin-bottom:2px;border:none;background:transparent;border-radius:7px;font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;color:var(--ink-3);cursor:pointer;}
+  .dash-nav-item:hover{background:var(--paper-dim);}
+  .dash-nav-item.active{background:var(--teal-light);color:var(--teal-dark);font-weight:600;}
+  .dash-main{flex:1;min-width:0;padding:28px 32px;overflow-y:auto;}
+  .dash-title{font-family:'Archivo',sans-serif;font-size:22px;font-weight:800;color:var(--ink);margin:0 0 20px;}
+  .dash-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px;}
+  .dash-kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .dash-kpi .l{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);margin-bottom:8px;}
+  .dash-kpi .v{font-family:'Archivo',sans-serif;font-size:26px;font-weight:800;color:var(--ink);}
+  .dash-kpi .d{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:6px;font-weight:600;}
+  .dash-kpi .d.up{color:#0ca30c;}
+  .dash-kpi .d.down{color:#d03b3b;}
+  .dash-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+  @media (max-width:900px){.dash-row{grid-template-columns:1fr;}.dash-shell{flex-direction:column;}.dash-nav{width:100%;}}
+  .dash-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;}
+  .dash-card h4{font-family:'Archivo',sans-serif;font-size:14px;font-weight:800;color:var(--ink);margin:0 0 14px;display:flex;justify-content:space-between;align-items:center;}
+  .dash-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--ink-3);background:var(--paper-dim);padding:3px 7px;border-radius:10px;letter-spacing:.2px;}
+  .dash-top-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--paper-dim);font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;}
+  .dash-top-item:last-child{border-bottom:none;}
+  .dash-top-item .rank{width:18px;font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-3);}
+  .dash-top-item .name{flex:1;color:var(--teal-dark);font-weight:600;}
+  .dash-top-item .count{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-3);}
+  .dash-bar-row{margin-bottom:12px;}
+  .dash-bar-row .top{display:flex;justify-content:space-between;font-family:'IBM Plex Sans KR',sans-serif;font-size:12.5px;color:var(--ink);margin-bottom:5px;}
+  .dash-bar-track{height:8px;background:var(--paper-dim);border-radius:4px;overflow:hidden;}
+  .dash-bar-fill{height:100%;border-radius:4px;}
+  .dash-note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);margin-top:10px;}
+  .dash-placeholder{padding:60px 20px;text-align:center;font-family:'IBM Plex Mono',monospace;color:var(--ink-3);}
+
   @media print{
     /* 견적서(#printArea)를 제외한 모든 화면 요소를 레이아웃에서 완전히 제거합니다.
        (visibility:hidden 방식은 숨긴 요소가 자리를 계속 차지해서 빈 페이지가
        추가로 딸려나오는 문제가 있어 display:none 방식으로 처리합니다.) */
     .titleblock, .spacebar, .toolbar, .count-line, #grid, #pagination,
-    .toast, #adminTrigger, #adminOverlay, #lockOverlay, .layout-sidebar{ display:none !important; }
+    .toast, #adminTrigger, #adminOverlay, #lockOverlay, .layout-sidebar,
+    .admin-top-tabs, #adminDashboardView{ display:none !important; }
     .layout{ max-width:none; margin:0; padding:0; display:block; }
     .layout-right{ width:auto; position:static; }
     .print-header{ display:block; margin-bottom:18px; }
@@ -629,6 +689,13 @@
 </style>
 </head>
 <body>
+
+<div class="admin-top-tabs" id="adminTopTabs">
+  <button class="admin-tab-btn" id="tabCatalogBtn" type="button">작업 화면 (일반 사용자)</button>
+  <button class="admin-tab-btn" id="tabDashboardBtn" type="button">관리자 대시보드</button>
+</div>
+
+<div id="catalogView">
 
 <div class="titleblock">
   <div class="wordmark">FOMERS<span>다수공급자계약 통합 카탈로그</span></div>
@@ -727,6 +794,23 @@
     </div>
   </div>
 
+</div>
+
+</div><!-- /#catalogView -->
+
+<div id="adminDashboardView">
+  <div class="dash-shell">
+    <nav class="dash-nav">
+      <p class="brand">FORMERS Admin</p>
+      <button class="dash-nav-item active" id="dashNav_home" type="button">대시보드</button>
+      <button class="dash-nav-item" id="dashNav_products" type="button">제품 분석</button>
+      <button class="dash-nav-item" id="dashNav_spaces" type="button">공간 분석</button>
+      <button class="dash-nav-item" id="dashNav_quotes" type="button">견적 관리</button>
+      <button class="dash-nav-item" id="dashNav_customers" type="button">고객 관리</button>
+      <button class="dash-nav-item" id="dashNav_settings" type="button">설정</button>
+    </nav>
+    <main class="dash-main" id="dashMain"></main>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -1088,7 +1172,7 @@ function renderPagination(totalItems){
   wrap.innerHTML =
     '<button id="pgFirst">« 처음</button>' +
     '<button id="pgPrev">‹ 이전</button>' +
-    '<span><input id="pgJumpInput" class="mono" type="number" min="1" max="' + totalPages + '" value="' + state.page + '" style="width:50px;padding:6px;border:1.5px solid var(--ink);font-family:\'IBM Plex Mono\',monospace;text-align:center;"> / ' + totalPages + ' 페이지</span>' +
+    '<span><input id="pgJumpInput" class="mono" type="number" min="1" max="' + totalPages + '" value="' + state.page + '" style="width:50px;padding:6px;border:1px solid var(--line);border-radius:6px;font-family:\'IBM Plex Mono\',monospace;text-align:center;"> / ' + totalPages + ' 페이지</span>' +
     '<button id="pgNext">다음 ›</button>' +
     '<button id="pgLast">끝 »</button>';
   document.getElementById('pgFirst').disabled = state.page <= 1;
@@ -1442,8 +1526,8 @@ function setupNeededHtml(){
 function loginScreenHtml(){
   return '<h3>관리자 로그인</h3>' +
     '<div class="admin-pin-row" style="flex-direction:column;align-items:stretch;">' +
-      '<input type="email" id="adminEmailInput" placeholder="이메일" style="margin-bottom:8px;padding:10px 12px;border:1.5px solid var(--ink);font-family:\'IBM Plex Mono\',monospace;font-size:13px;outline:none;">' +
-      '<input type="password" id="adminPwInput" placeholder="비밀번호" style="padding:10px 12px;border:1.5px solid var(--ink);font-family:\'IBM Plex Mono\',monospace;font-size:13px;outline:none;">' +
+      '<input type="email" id="adminEmailInput" placeholder="이메일" style="margin-bottom:8px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-family:\'IBM Plex Mono\',monospace;font-size:13px;outline:none;">' +
+      '<input type="password" id="adminPwInput" placeholder="비밀번호" style="padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-family:\'IBM Plex Mono\',monospace;font-size:13px;outline:none;">' +
     '</div>' +
     '<button class="admin-btn wide" id="adminLoginSubmit">로그인</button>' +
     '<p style="text-align:right;margin:8px 0 0;"><a href="#" id="adminForgotPw" style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--ink-3);">비밀번호를 잊으셨나요?</a></p>';
@@ -1463,6 +1547,7 @@ function statsHtml(){
       '<div class="admin-stat-row"><span>최근 로드 상태</span><b>' + statusText + '</b></div>' +
       '<div class="admin-stat-row"><span>사이트 상태</span><b style="color:' + (locked ? 'var(--rust)' : 'var(--teal)') + ';">' + (locked ? '사용중지됨' : '정상 운영중') + '</b></div>' +
     '</div>' +
+    '<button class="admin-btn wide" id="adminOpenDashboardBtn" style="background:var(--teal);">📊 대시보드 열기</button>' +
     '<button class="admin-btn wide" id="adminRefreshBtn">최신 데이터로 업데이트</button>' +
     '<button class="admin-btn wide" id="adminLockToggleBtn" style="background:' + (locked ? 'var(--teal)' : 'var(--rust)') + ';">' + (locked ? '사용 재개' : '사용 중지') + '</button>' +
     '<div class="admin-url">DATA_URL<br>' + (DATA_URL || '(설정 안 됨 · 샘플 데이터 사용 중)') + '</div>';
@@ -1521,6 +1606,10 @@ function renderAdminBody(){
       e.preventDefault();
       fbAuth.signOut();
     };
+    document.getElementById('adminOpenDashboardBtn').onclick = function(){
+      closeAdminPanel();
+      showDashboardView();
+    };
     document.getElementById('adminRefreshBtn').onclick = function(){
       var btn = document.getElementById('adminRefreshBtn');
       btn.disabled = true;
@@ -1570,12 +1659,155 @@ if(FIREBASE_READY){
     if(adminOverlay.classList.contains('show')){
       if(adminAuthed){ refreshLockStateThenRender(); } else { renderAdminBody(); }
     }
+    if(!adminAuthed){ showCatalogView(); }
+    renderTopTabs();
   });
 }
 
 document.getElementById('adminTrigger').addEventListener('click', openAdminPanel);
 adminOverlay.addEventListener('click', function(e){ if(e.target === adminOverlay) closeAdminPanel(); });
 document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeAdminPanel(); });
+
+/* ══════════════════ 관리자 대시보드 (로그인 후에만 접근 가능) ══════════════════ */
+var dashboardView = 'catalog';   // 'catalog' | 'dashboard'
+var dashNavPage = 'home';        // 대시보드 좌측 내비게이션에서 현재 선택된 페이지
+
+function renderTopTabs(){
+  var wrap = document.getElementById('adminTopTabs');
+  if(adminAuthed){ wrap.classList.add('show'); } else { wrap.classList.remove('show'); }
+  document.getElementById('tabCatalogBtn').classList.toggle('active', dashboardView === 'catalog');
+  document.getElementById('tabDashboardBtn').classList.toggle('active', dashboardView === 'dashboard');
+}
+
+function showCatalogView(){
+  dashboardView = 'catalog';
+  document.getElementById('catalogView').style.display = '';
+  document.getElementById('adminDashboardView').classList.remove('show');
+  renderTopTabs();
+}
+
+function showDashboardView(){
+  if(!(FIREBASE_READY && adminAuthed)){ showToast('관리자 로그인 후 이용 가능합니다'); return; }
+  dashboardView = 'dashboard';
+  document.getElementById('catalogView').style.display = 'none';
+  document.getElementById('adminDashboardView').classList.add('show');
+  renderTopTabs();
+  renderAdminDashboard();
+}
+
+document.getElementById('tabCatalogBtn').addEventListener('click', showCatalogView);
+document.getElementById('tabDashboardBtn').addEventListener('click', showDashboardView);
+
+var DASH_NAV_LABELS = {
+  home: '대시보드', products: '제품 분석', spaces: '공간 분석',
+  quotes: '견적 관리', customers: '고객 관리', settings: '설정'
+};
+
+['home','products','spaces','quotes','customers','settings'].forEach(function(key){
+  var btn = document.getElementById('dashNav_' + key);
+  if(!btn) return;
+  btn.addEventListener('click', function(){
+    dashNavPage = key;
+    ['home','products','spaces','quotes','customers','settings'].forEach(function(k){
+      var b = document.getElementById('dashNav_' + k);
+      if(b) b.classList.toggle('active', k === key);
+    });
+    renderAdminDashboard();
+  });
+});
+
+function dashSampleTag(){
+  return '<span class="dash-tag">샘플 데이터</span>';
+}
+function dashLiveTag(){
+  return '<span class="dash-tag" style="background:var(--teal-light);color:var(--teal-dark);">실데이터</span>';
+}
+
+function renderAdminDashboardHome(){
+  var main = document.getElementById('dashMain');
+
+  // 카테고리별 비중 — 실제 PRODUCTS 데이터로 계산 (유일한 실데이터 섹션)
+  var catCounts = {};
+  PRODUCTS.forEach(function(p){ var c = p.cat || '기타'; catCounts[c] = (catCounts[c]||0) + 1; });
+  var catTotal = PRODUCTS.length || 1;
+  var catEntries = Object.keys(catCounts).map(function(c){ return {name:c, count:catCounts[c]}; })
+    .sort(function(a,b){ return b.count - a.count; });
+  var catColors = ['var(--teal)','#5B8DEF','#8B7CF6','#3FBF8F','#E8A33D','#E06A6A'];
+  var catBarsHtml = catEntries.map(function(e, i){
+    var pct = Math.round((e.count / catTotal) * 1000) / 10;
+    return '<div class="dash-bar-row">' +
+      '<div class="top"><span>' + e.name + '</span><span>' + pct + '% · ' + e.count.toLocaleString('ko-KR') + '건</span></div>' +
+      '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:' + catColors[i % catColors.length] + ';"></div></div>' +
+    '</div>';
+  }).join('');
+
+  // 샘플 KPI (실사용 견적/고객 이력을 저장하는 백엔드가 아직 없어 견본값입니다)
+  var kpis = [
+    {l:'오늘 견적', v:'12', d:'▲ 20.0%', up:true},
+    {l:'이번달 견적', v:'187', d:'▲ 8.4%', up:true},
+    {l:'총 견적 금액', v:'8.2억', d:'▲ 11.2%', up:true},
+    {l:'평균 견적 금액', v:'440만', d:'▼ 2.1%', up:false},
+    {l:'신규 고객', v:'4', d:'▲ 33.3%', up:true}
+  ];
+  var kpisHtml = kpis.map(function(k){
+    return '<div class="dash-kpi"><div class="l">' + k.l + '</div><div class="v">' + k.v + '</div>' +
+      '<div class="d ' + (k.up ? 'up' : 'down') + '">' + k.d + ' (전월 대비)</div></div>';
+  }).join('');
+
+  // 샘플 인기 제품 TOP 10
+  var topProductsPool = PRODUCTS.length ? PRODUCTS : FALLBACK_PRODUCTS;
+  var topProducts = topProductsPool.slice(0, 10);
+  var topHtml = topProducts.length ? topProducts.map(function(p, i){
+    return '<div class="dash-top-item"><span class="rank">' + (i+1) + '</span>' +
+      '<span class="name">' + p.name + '</span><span class="count">' + (95 - i*6) + '건</span></div>';
+  }).join('') : '<div class="dash-placeholder">표시할 제품이 없습니다</div>';
+
+  // 샘플 기간별 견적 추이 (간단한 인라인 SVG 라인차트, 외부 차트 라이브러리 없이 구현)
+  var trend = [8,11,9,14,12,17,15,19,16,20,18,23];
+  var maxT = Math.max.apply(null, trend);
+  var svgW = 100, svgH = 100, pad = 6;
+  var pts = trend.map(function(v, i){
+    var x = pad + (i / (trend.length - 1)) * (svgW - pad*2);
+    var y = svgH - pad - (v / maxT) * (svgH - pad*2);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  var trendSvg = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:150px;" preserveAspectRatio="none">' +
+    '<polyline points="' + pts + '" fill="none" stroke="var(--teal)" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>' +
+    '</svg>';
+
+  // 샘플 공간 유형별 설계 빈도
+  var spaceRows = [
+    {name:'교무실', count:41}, {name:'회의실', count:29}, {name:'도서관', count:18}, {name:'음악실', count:12}
+  ];
+  var spaceMax = Math.max.apply(null, spaceRows.map(function(r){ return r.count; }));
+  var spaceHtml = spaceRows.map(function(r){
+    var pct = Math.round((r.count / spaceMax) * 1000) / 10;
+    return '<div class="dash-bar-row">' +
+      '<div class="top"><span>' + r.name + '</span><span>' + r.count + '건</span></div>' +
+      '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:var(--teal);"></div></div>' +
+    '</div>';
+  }).join('');
+
+  main.innerHTML =
+    '<h2 class="dash-title">대시보드</h2>' +
+    '<div class="dash-kpis">' + kpisHtml + '</div>' +
+    '<div class="dash-row">' +
+      '<div class="dash-card"><h4>인기 제품 TOP 10 (이번 달) ' + dashSampleTag() + '</h4>' + topHtml + '</div>' +
+      '<div class="dash-card"><h4>기간별 견적 추이 ' + dashSampleTag() + '</h4>' + trendSvg + '</div>' +
+    '</div>' +
+    '<div class="dash-row">' +
+      '<div class="dash-card"><h4>카테고리별 비중 ' + dashLiveTag() + '</h4>' + catBarsHtml + '</div>' +
+      '<div class="dash-card"><h4>공간 유형별 설계 빈도 ' + dashSampleTag() + '</h4>' + spaceHtml + '</div>' +
+    '</div>' +
+    '<p class="dash-note">※ "실데이터" 표시가 없는 항목은 아직 견적/고객 이력을 저장하는 서버가 없어 예시로 채운 샘플 수치입니다. 실제 데이터 연동이 필요하시면 말씀해주세요.</p>';
+}
+
+function renderAdminDashboard(){
+  if(dashNavPage === 'home'){ renderAdminDashboardHome(); return; }
+  var main = document.getElementById('dashMain');
+  main.innerHTML = '<h2 class="dash-title">' + DASH_NAV_LABELS[dashNavPage] + '</h2>' +
+    '<div class="dash-card"><div class="dash-placeholder">준비 중입니다 · ' + DASH_NAV_LABELS[dashNavPage] + ' 화면은 다음 업데이트에서 제공될 예정입니다</div></div>';
+}
 </script>
 
 </body>
