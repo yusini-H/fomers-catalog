@@ -10,6 +10,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <style>
   :root{
     --paper:#F7F9FB;
@@ -830,6 +831,16 @@
   .dash-bar-fill{height:100%;border-radius:4px;}
   .dash-note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);margin-top:10px;}
   .dash-placeholder{padding:60px 20px;text-align:center;font-family:'IBM Plex Mono',monospace;color:var(--ink-3);}
+  .dash-period-tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+  .dash-period-tab{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    padding:8px 16px;border-radius:20px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink-3);cursor:pointer;
+  }
+  .dash-period-tab.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .dash-chart-wrap{position:relative;width:100%;height:260px;}
+  .dash-up-text{color:#0ca30c;}
+  .dash-down-text{color:#d03b3b;}
 
   @media print{
     /* 견적서(#printArea)를 제외한 모든 화면 요소를 레이아웃에서 완전히 제거합니다.
@@ -2463,6 +2474,20 @@ function dateStrOf(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-'
 function monthStrOf(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1); }
 function dateStrOffset(base, offsetDays){ var d = new Date(base); d.setDate(d.getDate() + offsetDays); return dateStrOf(d); }
 function monthStrOffset(base, offsetMonths){ var d = new Date(base.getFullYear(), base.getMonth() + offsetMonths, 1); return monthStrOf(d); }
+// 대시보드 기간별 필터링(일/주/월/연)에 쓰이는 추가 날짜 유틸 — ISO 8601 기준 주차 계산
+function weekStrOf(d){
+  var date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var dayNum = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+  var yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  var weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+  return date.getUTCFullYear() + '-W' + pad2(weekNo);
+}
+function yearStrOf(d){ return String(d.getFullYear()); }
+function dateFromDateStr(s){
+  var parts = (s || '').split('-');
+  return new Date(Number(parts[0]), Number(parts[1] || 1) - 1, Number(parts[2] || 1));
+}
 
 function getClientId(){
   var KEY = 'fomers_client_id_v1';
@@ -2529,6 +2554,44 @@ function isUpDelta(cur, prev){
   if(prev <= 0) return cur > 0;
   return cur >= prev;
 }
+function won(n){
+  if(n >= 100000000) return (n / 100000000).toFixed(1) + '억';
+  if(n >= 10000) return Math.round(n / 10000).toLocaleString('ko-KR') + '만';
+  return n.toLocaleString('ko-KR') + '원';
+}
+
+// ── 대시보드 기간별 필터링(일간/주간/월간/연간) 공통 유틸 ──────────────────
+// quoteEvents에는 dateStr(YYYY-MM-DD) 하나만 저장돼 있으면 충분해서, 주/연 단위
+// 집계도 스키마 변경 없이 이 하나의 값으로부터 즉석에서 계산합니다.
+var PERIOD_TITLE = {day:'일간', week:'주간', month:'월간', year:'연간'};
+var PERIOD_UNIT_LABEL = {day:'오늘', week:'이번 주', month:'이번 달', year:'올해'};
+var PERIOD_COMPARE_LABEL = {day:'전일 대비', week:'전주 대비', month:'전월 대비', year:'전년 대비'};
+var PERIOD_TREND_BUCKETS = {day:14, week:12, month:12, year:5};
+
+function periodBucketKey(mode, d){
+  if(mode === 'week') return weekStrOf(d);
+  if(mode === 'year') return yearStrOf(d);
+  if(mode === 'month') return monthStrOf(d);
+  return dateStrOf(d);
+}
+function periodShift(mode, base, n){
+  var d = new Date(base);
+  if(mode === 'week'){ d.setDate(d.getDate() + n * 7); }
+  else if(mode === 'month'){ d.setMonth(d.getMonth() + n); }
+  else if(mode === 'year'){ d.setFullYear(d.getFullYear() + n); }
+  else { d.setDate(d.getDate() + n); }
+  return d;
+}
+function periodLabelOf(mode, key){
+  if(mode === 'week'){ var wp = key.split('-W'); return wp[0].slice(2) + '년 ' + Number(wp[1]) + '주'; }
+  if(mode === 'year'){ return key + '년'; }
+  if(mode === 'month'){ var mp = key.split('-'); return mp[0].slice(2) + '.' + mp[1]; }
+  var dp = key.split('-'); return dp[1] + '/' + dp[2];
+}
+
+var dashPeriodMode = 'month';   // 대시보드에서 현재 선택된 기간 단위
+var dashLastEvents = [];        // 마지막으로 불러온 quoteEvents 캐시 (기간 전환 시 재조회 없이 즉시 반영)
+var dashTrendChart = null;      // Chart.js 인스턴스 (재렌더 시 파괴 후 재생성)
 
 var QUOTE_EVENTS_FETCH_LIMIT = 500;
 
@@ -2552,9 +2615,11 @@ function renderAdminDashboardHome(){
 }
 
 function renderAdminDashboardHomeContent(events){
+  dashLastEvents = events;
   var main = document.getElementById('dashMain');
+  var mode = dashPeriodMode;
 
-  // 카테고리별 비중 — 실제 PRODUCTS 데이터로 계산
+  // 카테고리별 비중 — 실제 PRODUCTS 데이터로 계산 (카탈로그 구성 자체는 기간과 무관)
   var catCounts = {};
   PRODUCTS.forEach(function(p){ var c = p.cat || '기타'; catCounts[c] = (catCounts[c]||0) + 1; });
   var catTotal = PRODUCTS.length || 1;
@@ -2573,37 +2638,59 @@ function renderAdminDashboardHomeContent(events){
   var now = new Date();
   var todayStr = dateStrOf(now);
   var yesterdayStr = dateStrOffset(now, -1);
-  var thisMonthStr = monthStrOf(now);
-  var lastMonthStr = monthStrOffset(now, -1);
+
+  var curKey = periodBucketKey(mode, now);
+  var prevKey = periodBucketKey(mode, periodShift(mode, now, -1));
 
   var todayCount = 0, yesterdayCount = 0;
-  var monthCount = 0, lastMonthCount = 0;
-  var monthAmount = 0, lastMonthAmount = 0;
-  var productCountsThisMonth = {};   // code -> {name, qty}
-  var roomCounts = {};               // room name -> count (전체 조회 범위 기준)
-  var dailyCounts = {};              // dateStr -> count (최근 14일 추이용)
-  var clientFirstSeen = {};          // clientId -> 조회 범위 내 최초 등장 날짜(dateStr)
+  var curCount = 0, prevCount = 0;
+  var curAmount = 0, prevAmount = 0;
+  var curItemLines = 0, prevItemLines = 0;      // 견적 1건당 평균 품목 수 계산용
+  var productCountsCur = {};         // code -> {name, qty} (선택된 기간 기준)
+  var roomCountsCur = {};            // room name -> count (선택된 기간 기준)
+  var catCountsCur = {}, catCountsPrev = {};    // 카테고리 -> qty (기간별 성장률 비교용)
+  var bucketCounts = {};              // bucketKey -> count (추이 차트용)
+  var weekdayCounts = [0,0,0,0,0,0,0];   // 일~토 (선택된 기간 기준)
+  var clientFirstSeen = {};           // clientId -> 조회 범위 내 최초 등장 날짜(dateStr)
+  var clientCurSet = {};              // 이번 기간에 견적을 낸 고객 집합
 
   events.forEach(function(ev){
+    if(!ev.dateStr) return;
+    var evDate = dateFromDateStr(ev.dateStr);
+    var evKey = periodBucketKey(mode, evDate);
+
     if(ev.dateStr === todayStr) todayCount++;
     if(ev.dateStr === yesterdayStr) yesterdayCount++;
-    if(ev.monthStr === thisMonthStr){
-      monthCount++;
-      monthAmount += (ev.totalAmount || 0);
+
+    if(evKey === curKey){
+      curCount++;
+      curAmount += (ev.totalAmount || 0);
+      curItemLines += (ev.items || []).length;
+      weekdayCounts[evDate.getDay()]++;
+      if(ev.clientId) clientCurSet[ev.clientId] = true;
       (ev.items || []).forEach(function(it){
-        if(!productCountsThisMonth[it.code]) productCountsThisMonth[it.code] = {name: it.name, qty: 0};
-        productCountsThisMonth[it.code].qty += (it.qty || 0);
+        if(!productCountsCur[it.code]) productCountsCur[it.code] = {name: it.name, qty: 0};
+        productCountsCur[it.code].qty += (it.qty || 0);
+        var cat = (findProduct(it.code) || {}).cat || '기타';
+        catCountsCur[cat] = (catCountsCur[cat] || 0) + (it.qty || 0);
+      });
+      (ev.rooms || []).forEach(function(r){
+        var key = r.name || '기타';
+        roomCountsCur[key] = (roomCountsCur[key] || 0) + 1;
       });
     }
-    if(ev.monthStr === lastMonthStr){
-      lastMonthCount++;
-      lastMonthAmount += (ev.totalAmount || 0);
+    if(evKey === prevKey){
+      prevCount++;
+      prevAmount += (ev.totalAmount || 0);
+      prevItemLines += (ev.items || []).length;
+      (ev.items || []).forEach(function(it){
+        var cat = (findProduct(it.code) || {}).cat || '기타';
+        catCountsPrev[cat] = (catCountsPrev[cat] || 0) + (it.qty || 0);
+      });
     }
-    (ev.rooms || []).forEach(function(r){
-      var key = r.name || '기타';
-      roomCounts[key] = (roomCounts[key] || 0) + 1;
-    });
-    if(ev.dateStr){ dailyCounts[ev.dateStr] = (dailyCounts[ev.dateStr] || 0) + 1; }
+
+    bucketCounts[evKey] = (bucketCounts[evKey] || 0) + 1;
+
     if(ev.clientId){
       if(!clientFirstSeen[ev.clientId] || ev.dateStr < clientFirstSeen[ev.clientId]){
         clientFirstSeen[ev.clientId] = ev.dateStr;
@@ -2611,61 +2698,66 @@ function renderAdminDashboardHomeContent(events){
     }
   });
 
-  var newCustomersThisMonth = Object.keys(clientFirstSeen).filter(function(cid){
-    return (clientFirstSeen[cid] || '').indexOf(thisMonthStr) === 0;
+  var newCustomersCur = Object.keys(clientFirstSeen).filter(function(cid){
+    return periodBucketKey(mode, dateFromDateStr(clientFirstSeen[cid])) === curKey;
   }).length;
-  var newCustomersLastMonth = Object.keys(clientFirstSeen).filter(function(cid){
-    return (clientFirstSeen[cid] || '').indexOf(lastMonthStr) === 0;
+  var newCustomersPrev = Object.keys(clientFirstSeen).filter(function(cid){
+    return periodBucketKey(mode, dateFromDateStr(clientFirstSeen[cid])) === prevKey;
   }).length;
 
-  var monthAvg = monthCount > 0 ? Math.round(monthAmount / monthCount) : 0;
-  var lastMonthAvg = lastMonthCount > 0 ? Math.round(lastMonthAmount / lastMonthCount) : 0;
+  var curAvg = curCount > 0 ? Math.round(curAmount / curCount) : 0;
+  var prevAvg = prevCount > 0 ? Math.round(prevAmount / prevCount) : 0;
+  var curAvgItems = curCount > 0 ? (curItemLines / curCount) : 0;
+  var prevAvgItems = prevCount > 0 ? (prevItemLines / prevCount) : 0;
 
-  function won(n){
-    if(n >= 100000000) return (n / 100000000).toFixed(1) + '억';
-    if(n >= 10000) return Math.round(n / 10000).toLocaleString('ko-KR') + '만';
-    return n.toLocaleString('ko-KR') + '원';
-  }
+  // 재방문 고객 비율 — 이번 기간에 견적을 낸 고객 중, 처음 등장한 시점이 이번 기간이 아닌 비율
+  var curClientIds = Object.keys(clientCurSet);
+  var repeatClients = curClientIds.filter(function(cid){
+    return clientFirstSeen[cid] !== undefined && periodBucketKey(mode, dateFromDateStr(clientFirstSeen[cid])) !== curKey;
+  }).length;
+  var repeatRatio = curClientIds.length > 0 ? Math.round((repeatClients / curClientIds.length) * 1000) / 10 : 0;
+
+  var unitLabel = PERIOD_UNIT_LABEL[mode];
+  var cmpLabel = '(' + PERIOD_COMPARE_LABEL[mode] + ')';
 
   var kpis = [
     {l:'오늘 견적', v: todayCount.toLocaleString('ko-KR'), d: pctDelta(todayCount, yesterdayCount) + ' (전일 대비)', up: isUpDelta(todayCount, yesterdayCount)},
-    {l:'이번달 견적', v: monthCount.toLocaleString('ko-KR'), d: pctDelta(monthCount, lastMonthCount) + ' (전월 대비)', up: isUpDelta(monthCount, lastMonthCount)},
-    {l:'이번달 총 견적 금액', v: won(monthAmount), d: pctDelta(monthAmount, lastMonthAmount) + ' (전월 대비)', up: isUpDelta(monthAmount, lastMonthAmount)},
-    {l:'이번달 평균 견적 금액', v: won(monthAvg), d: pctDelta(monthAvg, lastMonthAvg) + ' (전월 대비)', up: isUpDelta(monthAvg, lastMonthAvg)},
-    {l:'이번달 신규 고객', v: newCustomersThisMonth.toLocaleString('ko-KR'), d: pctDelta(newCustomersThisMonth, newCustomersLastMonth) + ' (전월 대비)', up: isUpDelta(newCustomersThisMonth, newCustomersLastMonth)}
+    {l: unitLabel + ' 견적', v: curCount.toLocaleString('ko-KR'), d: pctDelta(curCount, prevCount) + ' ' + cmpLabel, up: isUpDelta(curCount, prevCount)},
+    {l: unitLabel + ' 총 견적 금액', v: won(curAmount), d: pctDelta(curAmount, prevAmount) + ' ' + cmpLabel, up: isUpDelta(curAmount, prevAmount)},
+    {l: unitLabel + ' 평균 견적 금액', v: won(curAvg), d: pctDelta(curAvg, prevAvg) + ' ' + cmpLabel, up: isUpDelta(curAvg, prevAvg)},
+    {l: unitLabel + ' 신규 고객', v: newCustomersCur.toLocaleString('ko-KR'), d: pctDelta(newCustomersCur, newCustomersPrev) + ' ' + cmpLabel, up: isUpDelta(newCustomersCur, newCustomersPrev)},
+    {l:'견적당 평균 품목 수', v: curAvgItems.toFixed(1) + '개', d: pctDelta(curAvgItems, prevAvgItems) + ' ' + cmpLabel, up: isUpDelta(curAvgItems, prevAvgItems)}
   ];
   var kpisHtml = kpis.map(function(k){
     return '<div class="dash-kpi"><div class="l">' + k.l + '</div><div class="v">' + k.v + '</div>' +
       '<div class="d ' + (k.up ? 'up' : 'down') + '">' + k.d + '</div></div>';
   }).join('');
 
-  // 인기 제품 TOP 10 (이번 달, quoteEvents 기반 실데이터)
-  var topEntries = Object.keys(productCountsThisMonth).map(function(code){ return productCountsThisMonth[code]; })
+  // 기간 선택 탭 (일간/주간/월간/연간)
+  var periodTabsHtml = ['day','week','month','year'].map(function(m){
+    return '<button class="dash-period-tab' + (m === mode ? ' active' : '') + '" data-period="' + m + '" type="button">' + PERIOD_TITLE[m] + '</button>';
+  }).join('');
+
+  // 인기 제품 TOP 10 (선택된 기간 기준, quoteEvents 실데이터)
+  var topEntries = Object.keys(productCountsCur).map(function(code){ return productCountsCur[code]; })
     .sort(function(a, b){ return b.qty - a.qty; }).slice(0, 10);
   var topHtml = topEntries.length ? topEntries.map(function(p, i){
     return '<div class="dash-top-item"><span class="rank">' + (i+1) + '</span>' +
       '<span class="name">' + p.name + '</span><span class="count">' + p.qty.toLocaleString('ko-KR') + '건</span></div>';
-  }).join('') : '<div class="dash-placeholder">이번 달 견적 데이터가 아직 없습니다</div>';
+  }).join('') : '<div class="dash-placeholder">' + unitLabel + ' 견적 데이터가 아직 없습니다</div>';
 
-  // 기간별 견적 추이 (최근 14일, quoteEvents 기반 실데이터, 외부 차트 라이브러리 없이 인라인 SVG로 구현)
-  var trendDays = [];
-  for(var i = 13; i >= 0; i--){ trendDays.push(dateStrOffset(now, -i)); }
-  var trend = trendDays.map(function(d){ return dailyCounts[d] || 0; });
-  var maxT = Math.max.apply(null, trend.concat([1]));
-  var svgW = 100, svgH = 100, svgPad = 6;
-  var pts = trend.map(function(v, i){
-    var x = svgPad + (i / (trend.length - 1)) * (svgW - svgPad*2);
-    var y = svgH - svgPad - (v / maxT) * (svgH - svgPad*2);
-    return x.toFixed(1) + ',' + y.toFixed(1);
-  }).join(' ');
-  var trendSvg = trend.some(function(v){ return v > 0; }) ?
-    ('<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" style="width:100%;height:150px;" preserveAspectRatio="none">' +
-      '<polyline points="' + pts + '" fill="none" stroke="var(--teal)" stroke-width="2" vector-effect="non-scaling-stroke"></polyline>' +
-      '</svg>') :
-    '<div class="dash-placeholder">최근 14일간 견적 데이터가 아직 없습니다</div>';
+  // 기간별 견적 추이 — Chart.js 막대(구간별 건수)+선(누적 건수) 혼합 차트
+  var bucketN = PERIOD_TREND_BUCKETS[mode];
+  var bucketKeys = [];
+  for(var bi = bucketN - 1; bi >= 0; bi--){ bucketKeys.push(periodBucketKey(mode, periodShift(mode, now, -bi))); }
+  var bucketCountArr = bucketKeys.map(function(k){ return bucketCounts[k] || 0; });
+  var bucketLabels = bucketKeys.map(function(k){ return periodLabelOf(mode, k); });
+  var cumSum = 0;
+  var bucketCumArr = bucketCountArr.map(function(v){ cumSum += v; return cumSum; });
+  var hasTrendData = bucketCountArr.some(function(v){ return v > 0; });
 
-  // 공간 유형별 설계 빈도 (조회 범위 내 전체 quoteEvents 기반 실데이터)
-  var spaceRows = Object.keys(roomCounts).map(function(name){ return {name: name, count: roomCounts[name]}; })
+  // 공간 유형별 설계 빈도 (선택된 기간 기준)
+  var spaceRows = Object.keys(roomCountsCur).map(function(name){ return {name: name, count: roomCountsCur[name]}; })
     .sort(function(a, b){ return b.count - a.count; }).slice(0, 8);
   var spaceMax = Math.max.apply(null, spaceRows.map(function(r){ return r.count; }).concat([1]));
   var spaceHtml = spaceRows.length ? spaceRows.map(function(r){
@@ -2674,26 +2766,115 @@ function renderAdminDashboardHomeContent(events){
       '<div class="top"><span>' + r.name + '</span><span>' + r.count.toLocaleString('ko-KR') + '건</span></div>' +
       '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:var(--teal);"></div></div>' +
     '</div>';
-  }).join('') : '<div class="dash-placeholder">공간별 견적 데이터가 아직 없습니다</div>';
+  }).join('') : '<div class="dash-placeholder">' + unitLabel + ' 공간별 견적 데이터가 아직 없습니다</div>';
+
+  // 요일별 견적 패턴 (선택된 기간 기준, 일~토) — 피크 요일 파악용
+  var weekdayLabels = ['일','월','화','수','목','금','토'];
+  var weekdayMax = Math.max.apply(null, weekdayCounts.concat([1]));
+  var hasWeekdayData = weekdayCounts.some(function(v){ return v > 0; });
+  var weekdayHtml = hasWeekdayData ? weekdayCounts.map(function(v, i){
+    var pct = Math.round((v / weekdayMax) * 1000) / 10;
+    return '<div class="dash-bar-row">' +
+      '<div class="top"><span>' + weekdayLabels[i] + '요일</span><span>' + v.toLocaleString('ko-KR') + '건</span></div>' +
+      '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:#5B8DEF;"></div></div>' +
+    '</div>';
+  }).join('') : '<div class="dash-placeholder">' + unitLabel + ' 견적 데이터가 아직 없습니다</div>';
+
+  // 카테고리별 증감 (선택된 기간 vs 이전 기간, 실데이터) — 상승/하락 상위 3개씩
+  var catGrowthAll = Object.keys(catCountsCur).concat(Object.keys(catCountsPrev))
+    .filter(function(v, i, arr){ return arr.indexOf(v) === i; })
+    .map(function(cat){
+      var cur = catCountsCur[cat] || 0, prev = catCountsPrev[cat] || 0;
+      return {cat: cat, cur: cur, prev: prev, delta: cur - prev};
+    })
+    .filter(function(g){ return g.cur > 0 || g.prev > 0; });
+  var catGrowthUp = catGrowthAll.slice().sort(function(a,b){ return b.delta - a.delta; }).filter(function(g){ return g.delta > 0; }).slice(0, 3);
+  var catGrowthDown = catGrowthAll.slice().sort(function(a,b){ return a.delta - b.delta; }).filter(function(g){ return g.delta < 0; }).slice(0, 3);
+  function growthRowHtml(g, up){
+    var label = pctDelta(g.cur, g.prev);
+    return '<div class="dash-top-item"><span class="name">' + g.cat + '</span>' +
+      '<span class="count ' + (up ? 'dash-up-text' : 'dash-down-text') + '">' + label + ' · ' + g.cur.toLocaleString('ko-KR') + '개</span></div>';
+  }
+  var catGrowthHtml = (catGrowthUp.length || catGrowthDown.length) ?
+    (catGrowthUp.map(function(g){ return growthRowHtml(g, true); }).join('') +
+     catGrowthDown.map(function(g){ return growthRowHtml(g, false); }).join('')) :
+    '<div class="dash-placeholder">비교할 데이터가 아직 부족합니다</div>';
 
   var capNote = events.length >= QUOTE_EVENTS_FETCH_LIMIT ?
     (' 최근 ' + QUOTE_EVENTS_FETCH_LIMIT + '건까지만 집계에 반영됩니다.') : '';
 
   main.innerHTML =
     '<h2 class="dash-title">대시보드</h2>' +
+    '<div class="dash-period-tabs">' + periodTabsHtml + '</div>' +
     '<div class="dash-kpis">' + kpisHtml + '</div>' +
-    '<div class="dash-row">' +
-      '<div class="dash-card"><h4>인기 제품 TOP 10 (이번 달) ' + dashLiveTag() + '</h4>' + topHtml + '</div>' +
-      '<div class="dash-card"><h4>기간별 견적 추이 (최근 14일) ' + dashLiveTag() + '</h4>' + trendSvg + '</div>' +
+    '<div class="dash-card" style="margin-bottom:16px;"><h4>기간별 견적 추이 (' + PERIOD_TITLE[mode] + ' · 최근 ' + bucketN + '개 구간) ' + dashLiveTag() + '</h4>' +
+      (hasTrendData ? '<div class="dash-chart-wrap"><canvas id="dashTrendCanvas"></canvas></div>' : '<div class="dash-placeholder">아직 데이터가 없습니다</div>') +
     '</div>' +
     '<div class="dash-row">' +
-      '<div class="dash-card"><h4>카테고리별 비중 ' + dashLiveTag() + '</h4>' + catBarsHtml + '</div>' +
-      '<div class="dash-card"><h4>공간 유형별 설계 빈도 ' + dashLiveTag() + '</h4>' + spaceHtml + '</div>' +
+      '<div class="dash-card"><h4>인기 제품 TOP 10 (' + unitLabel + ') ' + dashLiveTag() + '</h4>' + topHtml + '</div>' +
+      '<div class="dash-card"><h4>카테고리별 증감 (' + unitLabel + ' vs ' + PERIOD_COMPARE_LABEL[mode].replace('대비','') + ') ' + dashLiveTag() + '</h4>' + catGrowthHtml + '</div>' +
+    '</div>' +
+    '<div class="dash-row">' +
+      '<div class="dash-card"><h4>카테고리별 비중 (카탈로그 전체) ' + dashLiveTag() + '</h4>' + catBarsHtml + '</div>' +
+      '<div class="dash-card"><h4>공간 유형별 설계 빈도 (' + unitLabel + ') ' + dashLiveTag() + '</h4>' + spaceHtml + '</div>' +
+    '</div>' +
+    '<div class="dash-row">' +
+      '<div class="dash-card"><h4>요일별 견적 패턴 (' + unitLabel + ') ' + dashLiveTag() + '</h4>' + weekdayHtml + '</div>' +
+      '<div class="dash-card"><h4>재방문 고객 비율 (' + unitLabel + ') ' + dashLiveTag() + '</h4>' +
+        '<div class="dash-kpi" style="border:none;padding:0;"><div class="v" style="font-size:32px;">' + repeatRatio + '%</div>' +
+        '<div class="d">' + unitLabel + ' 견적을 낸 고객 ' + curClientIds.length.toLocaleString('ko-KR') + '명 중 ' + repeatClients.toLocaleString('ko-KR') + '명이 재방문 고객</div></div>' +
+      '</div>' +
     '</div>' +
     '<p class="dash-note">※ "카테고리별 비중"을 제외한 항목은 인쇄/PDF 저장 버튼을 누른 시점을 견적 1건으로 집계한 실제 데이터입니다. ' +
     '이번 업데이트 이후 발생하는 견적부터 기록되므로 초기에는 값이 0으로 표시될 수 있습니다. ' +
-    '"신규 고객"은 로그인 계정이 아닌 브라우저별 익명 식별자를 기준으로 한 추정치이며, 브라우저를 바꾸거나 쿠키를 지우면 다른 고객으로 집계될 수 있습니다.' +
+    '"신규 고객"·"재방문 고객"은 로그인 계정이 아닌 브라우저별 익명 식별자를 기준으로 한 추정치이며, 브라우저를 바꾸거나 쿠키를 지우면 다른 고객으로 집계될 수 있습니다. ' +
+    '수주 전환율(계약 성사 여부)은 아직 발주 데이터가 연동되지 않아 제공하지 않습니다.' +
     capNote + '</p>';
+
+  // 기간 탭 클릭 → Firestore 재조회 없이 캐시된 이벤트로 즉시 재렌더
+  document.querySelectorAll('.dash-period-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      dashPeriodMode = btn.getAttribute('data-period');
+      renderAdminDashboardHomeContent(dashLastEvents);
+    });
+  });
+
+  // Chart.js 막대+선 혼합 차트 렌더 (기존 인스턴스가 있으면 파괴 후 재생성)
+  if(dashTrendChart){ dashTrendChart.destroy(); dashTrendChart = null; }
+  if(hasTrendData && window.Chart){
+    var canvasEl = document.getElementById('dashTrendCanvas');
+    if(canvasEl){
+      dashTrendChart = new Chart(canvasEl.getContext('2d'), {
+        data: {
+          labels: bucketLabels,
+          datasets: [
+            {
+              type: 'bar', label: '건수', data: bucketCountArr,
+              backgroundColor: 'rgba(45,143,204,0.55)', borderRadius: 4, yAxisID: 'yCount'
+            },
+            {
+              type: 'line', label: '누적 건수', data: bucketCumArr,
+              borderColor: '#1B6699', backgroundColor: 'rgba(27,102,153,0.08)',
+              borderWidth: 2, pointRadius: 2, tension: 0.3, yAxisID: 'yCum'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {mode: 'index', intersect: false},
+          plugins: {
+            legend: {display: true, labels: {font: {family: "'IBM Plex Sans KR', sans-serif", size: 11}}}
+          },
+          scales: {
+            x: {ticks: {font: {family: "'IBM Plex Mono', monospace", size: 10}}},
+            yCount: {position: 'left', beginAtZero: true, title: {display: true, text: '건수'}},
+            yCum: {position: 'right', beginAtZero: true, grid: {drawOnChartArea: false}, title: {display: true, text: '누적'}}
+          }
+        }
+      });
+    }
+  }
 }
 
 function renderStaffManageTab(){
