@@ -908,6 +908,8 @@ var FIREBASE_READY = FIREBASE_CONFIG.apiKey.indexOf("여기에") === -1;
 var fbAuth = null;
 var fbDb = null;
 var lockDocRef = null;
+var OWNER_EMAIL = 'dbtls1562@gmail.com';
+var siteLockData = null;
 
 if(FIREBASE_READY){
   try{
@@ -923,16 +925,27 @@ if(FIREBASE_READY){
   }
 }
 
+// 사이트가 "사용중지" 상태여도 관리자(사장님) 본인은 항상 이용 가능해야 하므로,
+// 잠금 오버레이는 (1) 잠금 데이터 조회 결과와 (2) 로그인 상태(관리자 이메일 일치 여부)
+// 두 가지가 모두 확정된 뒤 최종 판단합니다. 둘 중 어느 쪽이 먼저 도착하든
+// applyLockOverlay()를 다시 호출해 최신 상태로 재평가합니다.
+function applyLockOverlay(){
+  var overlay = document.getElementById('lockOverlay');
+  if(!overlay) return;
+  var isOwner = (typeof adminAuthed !== 'undefined') && adminAuthed && adminUserEmail === OWNER_EMAIL;
+  if(siteLockData && siteLockData.locked && !isOwner){
+    if(siteLockData.message) document.getElementById('lockMessage').textContent = siteLockData.message;
+    overlay.style.display = 'flex';
+  } else {
+    overlay.style.display = 'none';
+  }
+}
+
 function checkLockStatus(){
   if(!FIREBASE_READY || !lockDocRef) return;
   lockDocRef.get().then(function(doc){
-    if(doc.exists){
-      var data = doc.data();
-      if(data.locked){
-        if(data.message) document.getElementById('lockMessage').textContent = data.message;
-        document.getElementById('lockOverlay').style.display = 'flex';
-      }
-    }
+    siteLockData = doc.exists ? doc.data() : null;
+    applyLockOverlay();
   }).catch(function(){
     // 조회 실패 시에는 안전하게 그냥 통과시킵니다 (오탐으로 정상 사용자를 막지 않기 위함)
   });
@@ -1693,6 +1706,8 @@ function renderAdminBody(){
         updatedBy: adminUserEmail || ''
       }, {merge:true}).then(function(){
         currentLockState = {locked: willLock};
+        siteLockData = currentLockState;
+        applyLockOverlay();
         renderAdminBody();
         showToast(willLock ? '사이트를 사용중지 상태로 전환했습니다' : '사이트를 다시 사용 가능하게 전환했습니다');
       }).catch(function(err){
@@ -1719,6 +1734,7 @@ if(FIREBASE_READY){
   fbAuth.onAuthStateChanged(function(user){
     adminAuthed = !!user;
     adminUserEmail = user ? user.email : null;
+    applyLockOverlay();
     if(adminOverlay.classList.contains('show')){
       if(adminAuthed){ refreshLockStateThenRender(); } else { renderAdminBody(); }
     }
