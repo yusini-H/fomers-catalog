@@ -453,19 +453,32 @@
     border-top:none;
     border-radius:0 0 8px 8px;
   }
-  .ticket-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;padding-right:26px;}
-  .ticket-code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--teal-dark);font-weight:600;}
-  .ticket-g2b-wrap{display:flex;align-items:center;gap:3px;}
-  .ticket-g2b{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);cursor:pointer;}
-  .ticket-g2b:hover{color:var(--teal-dark);text-decoration:underline;}
+  .ticket-body{display:flex;flex-direction:column;gap:8px;}
+  .ticket-meta{display:flex;flex-direction:column;gap:4px;margin-top:2px;}
+  .ticket-code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-3);}
+  .ticket-g2b-row{
+    display:flex;align-items:center;gap:6px;
+    background:var(--teal-light);
+    border:1px solid #cfe4f2;
+    border-radius:7px;
+    padding:6px 8px;
+    margin-top:2px;
+  }
+  .ticket-g2b-label{
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;
+    color:#fff;background:var(--teal-dark);padding:2px 5px;border-radius:4px;flex:none;
+  }
+  .ticket-g2b-num{
+    font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:700;
+    color:var(--ink-2);letter-spacing:.2px;flex:1;
+  }
   .g2b-copy-btn{
     display:flex;align-items:center;justify-content:center;flex:none;
-    width:16px;height:16px;padding:0;border:none;background:transparent;
-    color:var(--ink-3);cursor:pointer;border-radius:3px;
+    width:22px;height:22px;padding:0;border:1px solid #cfe4f2;background:#fff;
+    color:var(--teal-dark);cursor:pointer;border-radius:5px;
   }
-  .g2b-copy-btn:hover{color:var(--teal-dark);background:var(--paper-dim);}
-  .g2b-copy-btn svg{width:11px;height:11px;}
-  .ticket-body{display:flex;flex-direction:column;gap:8px;}
+  .g2b-copy-btn:hover{background:#fff;border-color:var(--teal);}
+  .g2b-copy-btn svg{width:12px;height:12px;}
   .thumb{
     width:100%;height:168px;flex:none;
     border:1px solid var(--line);
@@ -483,10 +496,9 @@
   .fav-star svg{width:13px;height:13px;stroke:var(--amber-dark);fill:none;}
   .fav-star.active svg{fill:var(--amber);stroke:var(--amber-dark);}
   .fav-star:hover{border-color:var(--amber);}
-  .ticket-name{font-size:15px;font-weight:600;margin:0;line-height:1.3;cursor:pointer;}
-  .ticket-name:hover{color:var(--teal-dark);text-decoration:underline;}
+  .ticket-name{font-size:15.5px;font-weight:600;margin:0;line-height:1.35;padding-right:26px;}
   .ticket-spec{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);line-height:1.5;}
-  .ticket-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;}
+  .ticket-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
   .badge-pill{
     font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;
     padding:2px 6px;border:1px solid var(--teal);color:var(--teal-dark);background:var(--paper);
@@ -1248,7 +1260,7 @@
       <p>[지사] 우.06551 서울특별시 서초구 동작대로 226 &nbsp; T. (02)532-6304~5 &nbsp; F. (02)532-6383</p>
       <p><a href="http://www.fomers.co.kr" target="_blank" rel="noopener">http://www.fomers.co.kr</a></p>
       <p>본 사이트는 공공누리 제1유형에 따라 조달청의 공공저작물을 이용하였습니다. <a href="https://www.g2b.go.kr" target="_blank" rel="noopener">나라장터 바로가기</a></p>
-      <p class="footer-copy">© 2017 BY FOMERS. ALL RIGHTS RESERVED.</p>
+      <p class="footer-copy">Copyright 2026. YUSIN HWANG. All rights reserved.</p>
     </div>
     <div class="footer-logo" id="adminTrigger">Fomers</div>
   </div>
@@ -1756,21 +1768,20 @@ function renderGrid(){
       '<button class="fav-star' + (favActive ? ' active' : '') + '" type="button" title="즐겨찾기">' +
         '<svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>' +
       '</button>' +
-      '<div class="ticket-top">' +
-        '<span class="ticket-code">' + p.code + '</span>' +
-        '<span class="ticket-g2b-wrap">' +
-          '<span class="ticket-g2b" data-g2b-link title="조달청 나라장터에서 상세보기">G2B ' + p.g2b + '</span>' +
-          '<button class="g2b-copy-btn" type="button" data-g2b-copy title="G2B번호 복사">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="1.5"></rect><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path></svg>' +
-          '</button>' +
-        '</span>' +
-      '</div>' +
+      '<p class="ticket-name">' + p.name + '</p>' +
       '<div class="ticket-body">' +
         '<div class="thumb" data-thumb>' + IMG_ICON + '</div>' +
-        '<div style="flex:1;min-width:0;">' +
-          '<p class="ticket-name" data-g2b-link title="조달청 나라장터에서 상세보기">' + p.name + '</p>' +
-          '<p class="ticket-spec">' + p.spec + '</p>' +
+        '<div class="ticket-meta">' +
+          '<span class="ticket-code">' + p.code + '</span>' +
+          '<span class="ticket-spec">' + p.spec + '</span>' +
           badgesHtml +
+          '<div class="ticket-g2b-row">' +
+            '<span class="ticket-g2b-label">G2B</span>' +
+            '<span class="ticket-g2b-num">' + p.g2b + '</span>' +
+            '<button class="g2b-copy-btn" type="button" data-g2b-copy title="G2B번호 복사">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="1.5"></rect><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path></svg>' +
+            '</button>' +
+          '</div>' +
         '</div>' +
       '</div>' +
       '<div class="ticket-bottom">' +
@@ -1779,9 +1790,6 @@ function renderGrid(){
       '</div>';
     card.querySelector('.add-btn').onclick = function(){ addToCart(p.code); };
     card.querySelector('.fav-star').onclick = function(e){ e.stopPropagation(); toggleFavorite(p.code); };
-    card.querySelectorAll('[data-g2b-link]').forEach(function(el){
-      el.addEventListener('click', function(e){ e.stopPropagation(); openG2BDetail(p.g2b); });
-    });
     var g2bCopyBtn = card.querySelector('[data-g2b-copy]');
     if(g2bCopyBtn){
       g2bCopyBtn.addEventListener('click', function(e){ e.stopPropagation(); copyG2BNumber(p.g2b); });
