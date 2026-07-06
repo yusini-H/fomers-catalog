@@ -205,6 +205,9 @@
   .room-chip.active .x{background:#fff;color:var(--teal-dark);}
   .room-chip.pending-remove{background:var(--rust);color:#fff;border-color:var(--rust-dark);}
   .room-chip.pending-remove .x{background:transparent;color:#fff;font-weight:600;}
+  .room-chip[draggable]{ cursor:grab; }
+  .room-chip.reorder-before{ box-shadow:-3px 0 0 0 #007bff inset; }
+  .room-chip.reorder-after{ box-shadow:3px 0 0 0 #007bff inset; }
   .add-room-form{
     display:flex;
     gap:6px;
@@ -555,11 +558,11 @@
        표 형태 대신 카드형(그리드) 레이아웃으로 표시합니다. */
     .layout-right table.qtable tbody tr[data-room-id]{
       display:grid;
-      grid-template-columns:18px 28px 78px 1fr auto;
+      grid-template-columns:18px 28px 92px 1fr 50px 78px auto;
       grid-template-areas:
-        "check thumb code name remove"
-        "check spec  spec spec spec"
-        "check qty   qty  price total";
+        "check thumb code name  name  name  remove"
+        "check spec  spec spec  spec  spec  spec"
+        "check .     .    .     qty   price total";
       column-gap:8px;
       row-gap:6px;
       align-items:center;
@@ -574,8 +577,8 @@
     .layout-right table.qtable tbody tr[data-room-id] td.row-code{
       grid-area:code;max-width:100%;align-self:center;
       font-size:10px;color:#374151;background:#F3F4F6;
-      padding:3px 6px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-      border-radius:999px;
+      padding:3px 6px;text-align:center;white-space:normal;word-break:break-all;line-height:1.3;
+      border-radius:10px;
     }
     .layout-right table.qtable tbody tr[data-room-id] td.row-name{
       grid-area:name;align-self:center;font-weight:600;font-size:13px;
@@ -585,6 +588,10 @@
     .layout-right table.qtable tbody tr[data-room-id] td.row-qty{ grid-area:qty;display:flex;flex-direction:column;gap:3px; }
     .layout-right table.qtable tbody tr[data-room-id] td.row-price{ grid-area:price;display:flex;flex-direction:column;gap:2px; }
     .layout-right table.qtable tbody tr[data-room-id] td.row-total{ grid-area:total;display:flex;flex-direction:column;gap:2px;align-items:flex-end; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-qty .qty-input{ width:100%; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-price .price-input{ width:100%; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-price .price-with-pct{ flex-direction:column;align-items:stretch;gap:3px; }
+    .layout-right table.qtable tbody tr[data-room-id] td.row-price .price-pct-input{ width:100%; }
     .layout-right table.qtable tbody tr[data-room-id] td.row-g2b.col-g2b{ display:none; }
   }
   table.qtable thead th{
@@ -636,6 +643,15 @@
     border:1px solid var(--line);background:#fff;padding:4px 5px;
   }
   .price-input:focus{border-color:var(--teal);outline:none;}
+  .price-with-pct{ display:flex;align-items:center;gap:4px; }
+  .price-pct-input{
+    width:46px;box-sizing:border-box;text-align:right;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-dark);
+    border:1px solid var(--line);background:var(--teal-light);padding:4px 5px;
+    border-radius:4px;
+  }
+  .price-pct-input::placeholder{color:#8FB6CC;}
+  .price-pct-input:focus{border-color:var(--teal);outline:none;background:#fff;}
   .row-price,.row-total{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   .row-total{font-weight:600;}
   .row-thumb{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:center;border-radius:8px;overflow:hidden;}
@@ -723,6 +739,8 @@
   }
   .qtable tbody.room-group{ transition:outline-color .12s, background-color .12s; outline:2px dashed transparent; outline-offset:-2px; }
   .qtable tbody.room-group.drop-hover{ outline-color:#007bff; background-color:rgba(0,123,255,.06); }
+  .qtable tr[data-room-id][data-code].drop-indicator-before td{ box-shadow:inset 0 2px 0 0 #007bff; }
+  .qtable tr[data-room-id][data-code].drop-indicator-after td{ box-shadow:inset 0 -2px 0 0 #007bff; }
   .qtable tr[data-room-id][data-code]{ cursor:grab; }
   .qtable tr[data-room-id][data-code]:active{ cursor:grabbing; }
   .qtable tr[data-room-id][data-code].row-dragging{ opacity:.4; }
@@ -1601,6 +1619,47 @@ function copyG2BNumber(g2b){
 }
 function findProduct(code){ return PRODUCTS.filter(function(p){return p.code===code;})[0]; }
 function findRoom(id){ return state.rooms.filter(function(r){return r.id===id;})[0]; }
+
+// 견적서 안에서 품목을 드래그로 재정렬할 수 있도록, 공간(room)마다 표시 순서를 별도로 관리합니다.
+// (room.items는 {코드:수량} 객체라 순서 개념이 약해서, room.itemOrder라는 코드 배열로 순서만 따로 추적합니다.
+//  담기/삭제로 room.items 내용이 바뀌어도 이 함수가 호출될 때마다 자동으로 최신 상태와 동기화됩니다 —
+//  없어진 코드는 걸러내고, 아직 추적되지 않은 새 코드는 맨 뒤에 추가합니다.)
+function getOrderedCodes(room){
+  var codes = Object.keys(room.items);
+  if(!room.itemOrder) room.itemOrder = [];
+  room.itemOrder = room.itemOrder.filter(function(c){ return codes.indexOf(c) !== -1; });
+  codes.forEach(function(c){ if(room.itemOrder.indexOf(c) === -1) room.itemOrder.push(c); });
+  return room.itemOrder;
+}
+function reorderItemInRoom(roomId, code, targetCode, insertAfter){
+  var room = findRoom(roomId);
+  if(!room) return;
+  var order = getOrderedCodes(room).slice();
+  var fromIdx = order.indexOf(code);
+  if(fromIdx === -1) return;
+  order.splice(fromIdx, 1);
+  var toIdx = order.indexOf(targetCode);
+  if(toIdx === -1) toIdx = order.length;
+  else if(insertAfter) toIdx += 1;
+  order.splice(toIdx, 0, code);
+  room.itemOrder = order;
+  renderQuote();
+}
+function roomIndexOf(id){
+  for(var i = 0; i < state.rooms.length; i++){ if(state.rooms[i].id === id) return i; }
+  return -1;
+}
+function reorderRoom(draggedRoomId, targetRoomId, insertAfter){
+  if(draggedRoomId === targetRoomId) return;
+  var fromIdx = roomIndexOf(draggedRoomId);
+  if(fromIdx === -1) return;
+  var moved = state.rooms.splice(fromIdx, 1)[0];
+  var toIdx = roomIndexOf(targetRoomId);
+  if(toIdx === -1) toIdx = state.rooms.length;
+  else if(insertAfter) toIdx += 1;
+  state.rooms.splice(toIdx, 0, moved);
+  render();
+}
 // 영업자/관리매니저/관리자가 견적 화면에서 단가를 임시로 조정할 수 있게 하는 방(room) 단위 오버라이드.
 // specOverrides와 동일한 패턴 — PRODUCTS 원본 단가는 건드리지 않고, 이 견적 세션에서만 유효합니다.
 function effectivePrice(room, code, p){
@@ -1898,6 +1957,7 @@ var pendingRemoveTimer = null;
 var selectedItemKeys = new Set();
 var copyClipboard = []; // [복사] 클릭 시 확정되는, 아직 붙여넣지 않은 키 목록 (여러 공간에 반복 붙여넣기 가능)
 var currentDragKeys = null; // dragstart 시점에 확정되는, 이번 드래그로 복사할 키 목록
+var draggingChipRoomId = null; // 공간 칩을 드래그해 순서를 바꿀 때, 드래그 중인 공간의 id
 var POINTER_FINE = window.matchMedia('(pointer:fine)').matches;
 
 function copyItemKeysToRoom(keys, targetRoomId){
@@ -2053,12 +2113,38 @@ function renderRoomChips(){
     };
     chip.onclick = function(){ state.activeRoomId = r.id; render(); };
     if(POINTER_FINE){
-      chip.addEventListener('dragover', function(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; chip.classList.add('drop-hover'); });
-      chip.addEventListener('dragleave', function(){ chip.classList.remove('drop-hover'); });
+      // 칩 자체를 드래그하면 공간(방) 순서를 바꾸고, 견적서 행을 칩 위로 드래그하면 그 공간으로 품목을 복사합니다.
+      chip.setAttribute('draggable', 'true');
+      chip.addEventListener('dragstart', function(e){
+        draggingChipRoomId = r.id;
+        e.dataTransfer.effectAllowed = 'move';
+        try{ e.dataTransfer.setData('text/plain', 'fomers-room-reorder'); }catch(err){}
+      });
+      chip.addEventListener('dragend', function(){ draggingChipRoomId = null; });
+      chip.addEventListener('dragover', function(e){
+        e.preventDefault();
+        if(draggingChipRoomId && draggingChipRoomId !== r.id){
+          var rect = chip.getBoundingClientRect();
+          var isAfter = (e.clientX - rect.left) > rect.width / 2;
+          chip.classList.toggle('reorder-after', isAfter);
+          chip.classList.toggle('reorder-before', !isAfter);
+        } else if(currentDragKeys){
+          e.dataTransfer.dropEffect = 'copy';
+          chip.classList.add('drop-hover');
+        }
+      });
+      chip.addEventListener('dragleave', function(){
+        chip.classList.remove('drop-hover', 'reorder-before', 'reorder-after');
+      });
       chip.addEventListener('drop', function(e){
         e.preventDefault();
-        chip.classList.remove('drop-hover');
-        if(currentDragKeys && currentDragKeys.length){
+        var rect = chip.getBoundingClientRect();
+        var isAfter = (e.clientX - rect.left) > rect.width / 2;
+        chip.classList.remove('drop-hover', 'reorder-before', 'reorder-after');
+        if(draggingChipRoomId){
+          reorderRoom(draggingChipRoomId, r.id, isAfter);
+          draggingChipRoomId = null;
+        } else if(currentDragKeys && currentDragKeys.length){
           copyItemKeysToRoom(currentDragKeys, r.id);
           currentDragKeys = null;
         }
@@ -2161,6 +2247,27 @@ function setPrice(roomId, code, value){
   renderQuote();
 }
 
+// 단가 옆 할인율(%) 계산기 — 영업자/관리매니저(및 관리자)만 볼 수 있는 단가 입력칸에서만 노출됩니다.
+// 정가(카탈로그 원래 단가) 기준으로 계산하므로, -5를 입력하면 정가의 5% 할인된 금액이 단가에 그대로 반영됩니다.
+// (이미 할인이 적용된 단가에 다시 -5를 곱하는 방식이 아니라, 매번 정가 기준으로 새로 계산합니다.)
+function setPricePercent(roomId, code, value){
+  if(!hasPermission('custom_price')) return;
+  var room = findRoom(roomId);
+  if(!room) return;
+  var p = findProduct(code);
+  if(!p) return;
+  var pct = parseFloat(value);
+  if(!room.priceOverrides) room.priceOverrides = {};
+  if(!isFinite(pct) || pct === 0){
+    delete room.priceOverrides[code];
+  } else {
+    var newPrice = Math.round(p.price * (1 + pct / 100));
+    if(newPrice < 0) newPrice = 0;
+    if(newPrice === p.price){ delete room.priceOverrides[code]; } else { room.priceOverrides[code] = newPrice; }
+  }
+  renderQuote();
+}
+
 function setSpec(roomId, code, value){
   var room = findRoom(roomId);
   if(!room) return;
@@ -2197,7 +2304,7 @@ function renderQuote(){
       var floorRoomsHtml = '';
 
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
-        var codes = Object.keys(room.items);
+        var codes = getOrderedCodes(room);
         var roomTotal = 0;
         var roomHtml = '<tr class="grp-room"><td colspan="10">' + room.name + '</td></tr>';
 
@@ -2216,8 +2323,15 @@ function renderQuote(){
             var selKey = room.id + '||' + code;
             var isSelected = selectedItemKeys.has(selKey);
             var canEditPrice = hasPermission('custom_price');
+            var pctVal = '';
+            if(room.priceOverrides && room.priceOverrides[code] !== undefined && p.price > 0){
+              pctVal = Math.round(((room.priceOverrides[code] / p.price) - 1) * 1000) / 10;
+            }
             var priceCellHtml = canEditPrice ?
-              '<span class="field-label">단가</span><input class="price-input mono" type="number" min="0" value="' + priceVal + '">' :
+              '<span class="field-label">단가</span><div class="price-with-pct">' +
+                '<input class="price-input mono" type="number" min="0" value="' + priceVal + '">' +
+                '<input class="price-pct-input mono" type="number" step="1" placeholder="%" title="정가 대비 할인/할증율(%) — 예: -5 입력 시 정가의 5% 할인" value="' + pctVal + '">' +
+              '</div>' :
               '<span class="field-label">단가</span><span class="field-value">' + fmt(priceVal) + '</span>';
             roomHtml +=
               '<tr class="' + (isSelected ? 'row-selected' : '') + '" data-room-id="' + room.id + '" data-code="' + code + '">' +
@@ -2281,6 +2395,15 @@ function renderQuote(){
       inp.addEventListener('blur', commitPrice);
       inp.addEventListener('click', function(e){ e.stopPropagation(); });
     });
+    wrap.querySelectorAll('.price-pct-input').forEach(function(inp){
+      var row = inp.closest('tr');
+      var roomId = row.getAttribute('data-room-id');
+      var code = row.getAttribute('data-code');
+      function commitPct(){ setPricePercent(roomId, code, inp.value); }
+      inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ inp.blur(); } });
+      inp.addEventListener('blur', commitPct);
+      inp.addEventListener('click', function(e){ e.stopPropagation(); });
+    });
     wrap.querySelectorAll('.row-remove').forEach(function(btn){
       btn.onclick = function(){
         var row = btn.closest('tr');
@@ -2313,6 +2436,40 @@ function renderQuote(){
         });
         row.addEventListener('dragend', function(){
           row.classList.remove('row-dragging');
+          currentDragKeys = null;
+        });
+        // 같은 공간 안에서 품목 하나를 다른 품목 행 위로 끌어다 놓으면 순서를 바꿉니다.
+        // (여러 개를 선택해 끌 때는 순서변경 대신 기존의 이동/복사 동작을 그대로 따릅니다.)
+        row.addEventListener('dragover', function(e){
+          if(!currentDragKeys || currentDragKeys.length !== 1) return;
+          var sep = currentDragKeys[0].indexOf('||');
+          var dragRoomId = currentDragKeys[0].slice(0, sep), dragCode = currentDragKeys[0].slice(sep + 2);
+          var thisRoomId = row.getAttribute('data-room-id');
+          var thisCode = row.getAttribute('data-code');
+          if(dragRoomId !== thisRoomId || dragCode === thisCode) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var rect = row.getBoundingClientRect();
+          var isAfter = (e.clientY - rect.top) > rect.height / 2;
+          row.classList.toggle('drop-indicator-after', isAfter);
+          row.classList.toggle('drop-indicator-before', !isAfter);
+        });
+        row.addEventListener('dragleave', function(){
+          row.classList.remove('drop-indicator-before', 'drop-indicator-after');
+        });
+        row.addEventListener('drop', function(e){
+          if(!currentDragKeys || currentDragKeys.length !== 1) return;
+          var sep = currentDragKeys[0].indexOf('||');
+          var dragRoomId = currentDragKeys[0].slice(0, sep), dragCode = currentDragKeys[0].slice(sep + 2);
+          var thisRoomId = row.getAttribute('data-room-id');
+          var thisCode = row.getAttribute('data-code');
+          if(dragRoomId !== thisRoomId || dragCode === thisCode) return;
+          e.preventDefault();
+          e.stopPropagation();
+          var rect = row.getBoundingClientRect();
+          var isAfter = (e.clientY - rect.top) > rect.height / 2;
+          row.classList.remove('drop-indicator-before', 'drop-indicator-after');
+          reorderItemInRoom(thisRoomId, dragCode, thisCode, isAfter);
           currentDragKeys = null;
         });
       });
