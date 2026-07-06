@@ -323,12 +323,27 @@
     position:sticky;
     top:calc(var(--spacebar-h) + 20px);
   }
+  /* 제품 그리드(왼쪽)와 별개로 견적서(오른쪽)만 자체 스크롤되도록 구성 —
+     .quote-head(제목/통계/인쇄버튼)와 안내문구는 고정해두고 #quoteWrap(품목 표) 내부만 스크롤합니다. */
+  #printArea{
+    display:flex;
+    flex-direction:column;
+    max-height:calc(100vh - var(--spacebar-h) - 40px);
+  }
+  #printArea > .quote-head, #printArea > #dragHint, #printArea > .quote-note{ flex:none; }
+  #quoteWrap{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+  }
   @media (max-width:1360px){
     .layout-sidebar{position:static;max-height:none;}
     .layout{flex-wrap:wrap;}
     .layout-sidebar{order:1;width:100%;}
     .layout-left{order:2;width:100%;}
     .layout-right{order:3;width:100%;position:static;}
+    #printArea{max-height:none;}
+    #quoteWrap{overflow-y:visible;}
   }
   @media (max-width:1100px){
     .layout{flex-direction:column;}
@@ -373,6 +388,35 @@
     display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;
   }
   .sidebar-cert-btn.active .box{background:var(--teal);border-color:var(--teal);}
+  .sidebar-check-btn .box{
+    width:13px;height:13px;flex:none;border:1.5px solid var(--ink-3);border-radius:3px;
+    display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;
+  }
+  .sidebar-check-btn.active .box{background:var(--teal);border-color:var(--teal);}
+  .sidebar-check-btn{justify-content:flex-start;}
+  .sidebar-check-btn .lbl{flex:1;}
+  .sidebar-list.collapsed{display:none;}
+  .sidebar-title-collapsible{display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+  .collapse-toggle{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);}
+  .filter-reset-btn{
+    display:flex;align-items:center;gap:5px;width:100%;
+    background:transparent;border:1px dashed var(--line);border-radius:6px;
+    padding:7px 8px;margin-bottom:10px;font-family:'IBM Plex Mono',monospace;
+    font-size:11px;color:var(--ink-3);cursor:pointer;
+  }
+  .filter-reset-btn:hover{background:var(--paper-dim);color:var(--ink-2);border-color:var(--ink-3);}
+  .active-filter-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+  .active-filter-chips:empty{display:none;margin:0;}
+  .active-filter-chip{
+    display:flex;align-items:center;gap:5px;
+    background:var(--teal-light);color:var(--teal-dark);border-radius:999px;
+    padding:5px 6px 5px 10px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+  }
+  .active-filter-chip .chip-x{
+    width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,.08);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;line-height:1;
+  }
+  .active-filter-chip .chip-x:hover{background:rgba(0,0,0,.18);}
   .sidebar-chip-row{display:flex;flex-wrap:wrap;gap:6px;}
   .sidebar-chip{
     font-family:'IBM Plex Mono',monospace;font-size:10px;padding:5px 8px;
@@ -584,21 +628,21 @@
        표 형태 대신 카드형(그리드) 레이아웃으로 표시합니다. */
     .layout-right table.qtable tbody tr[data-room-id]{
       display:grid;
-      grid-template-columns:18px 28px 92px 1fr 50px 78px auto;
+      grid-template-columns:28px 92px 1fr 50px 78px auto;
       grid-template-areas:
-        "check thumb code name  name  name  remove"
-        "check spec  spec spec  spec  spec  spec"
-        "check .     .    .     qty   price total";
+        "thumb code name  name  name  remove"
+        "spec  spec spec  spec  spec  spec"
+        ".     .    .     qty   price total";
       column-gap:8px;
       row-gap:6px;
       align-items:center;
       padding:10px 8px;
       border-bottom:1px solid var(--paper-dim);
+      cursor:pointer;
     }
     .layout-right table.qtable tbody tr[data-room-id] > td{
       display:block;padding:0;border:none;
     }
-    .layout-right table.qtable tbody tr[data-room-id] td.row-check{ grid-area:check;align-self:start;padding-top:2px; }
     .layout-right table.qtable tbody tr[data-room-id] .row-thumb-cell{ grid-area:thumb; }
     .layout-right table.qtable tbody tr[data-room-id] td.row-code{
       grid-area:code;max-width:100%;align-self:center;
@@ -765,6 +809,8 @@
   }
   .qtable tbody.room-group{ transition:outline-color .12s, background-color .12s; outline:2px dashed transparent; outline-offset:-2px; }
   .qtable tbody.room-group.drop-hover{ outline-color:#007bff; background-color:rgba(0,123,255,.06); }
+  .qtable tbody.room-group.drop-hover.drop-hover-copy{ outline-color:#0ca30c; background-color:rgba(12,163,12,.07); }
+  .qtable tbody.room-group.drop-hover.drop-hover-move{ outline-color:#007bff; background-color:rgba(0,123,255,.06); }
   .qtable tr[data-room-id][data-code].drop-indicator-before td{ box-shadow:inset 0 2px 0 0 #007bff; }
   .qtable tr[data-room-id][data-code].drop-indicator-after td{ box-shadow:inset 0 -2px 0 0 #007bff; }
   .qtable tr[data-room-id][data-code]{ cursor:grab; }
@@ -961,6 +1007,10 @@
     padding:8px 14px;background:var(--teal);color:#EFF7F4;border:none;cursor:pointer;
   }
   .print-btn:hover{background:var(--teal-dark);}
+  .print-btn-top{
+    border-radius:6px;white-space:nowrap;flex:none;
+  }
+  @media (max-width:640px){ .print-btn-top{display:none;} }
   .print-header{display:none;}
 
   /* ── 관리자 대시보드 (로그인 후에만 접근 가능) ── */
@@ -1032,6 +1082,8 @@
     .admin-top-tabs, #adminDashboardView, #staffOverlay{ display:none !important; }
     .layout{ max-width:none; margin:0; padding:0; display:block; }
     .layout-right{ width:auto; position:static; }
+    #printArea{ display:block; max-height:none; overflow:visible; }
+    #quoteWrap{ overflow:visible; max-height:none; }
     .print-header{
       display:flex; justify-content:space-between; align-items:flex-end;
       border-bottom:3px solid var(--teal); padding-bottom:12px; margin-bottom:18px;
@@ -1213,6 +1265,7 @@
         <button type="button" class="draft-stage-btn" data-stage="수정안">수정안</button>
         <button type="button" class="draft-stage-btn" data-stage="최종안">최종안</button>
       </div>
+      <button class="print-btn print-btn-top no-print" id="printBtnTop" type="button">인쇄 / PDF 저장</button>
     </div>
     <div class="space-block">
       <div class="space-head"><span>공간 목록</span><span class="active-note" id="activeNote"></span></div>
@@ -1233,11 +1286,13 @@
 <div class="layout">
 
   <nav class="layout-sidebar" id="layoutSidebar">
+    <button class="filter-reset-btn no-print" id="filterResetBtn" type="button">↻ 전체 필터 초기화</button>
     <div class="sidebar-search">
       <input id="searchInput" type="text" placeholder="🔍 품명 · 모델코드 · G2B번호 검색">
     </div>
+    <div class="active-filter-chips" id="activeFilterChips"></div>
     <div class="sidebar-section">
-      <p class="sidebar-title">카테고리</p>
+      <p class="sidebar-title sidebar-title-collapsible" id="catFilterTitle">세부품명 <span class="collapse-toggle" id="catFilterToggle">⌃</span></p>
       <div class="sidebar-list" id="filterBar"></div>
     </div>
     <div class="sidebar-section">
@@ -1565,8 +1620,8 @@ var FALLBACK_PRODUCTS = [
 var PRODUCTS = [];
 
 var state = {
-  filter: "전체",
-  certFilter: "전체",
+  filters: [],
+  certFilters: [],
   sort: "default",
   query: "",
   page: 1,
@@ -1750,10 +1805,12 @@ function loadProducts(cb){
 }
 
 function categories(){
-  var set = ["전체"];
+  var set = [];
   PRODUCTS.forEach(function(p){ if(p.cat && set.indexOf(p.cat) === -1) set.push(p.cat); });
   return set;
 }
+
+var catFilterCollapsed = false;
 
 function renderFilters(){
   var bar = document.getElementById('filterBar');
@@ -1761,13 +1818,22 @@ function renderFilters(){
   var counts = {};
   PRODUCTS.forEach(function(p){ counts[p.cat] = (counts[p.cat]||0) + 1; });
   categories().forEach(function(c){
-    var n = c === "전체" ? PRODUCTS.length : (counts[c]||0);
+    var n = counts[c] || 0;
+    var checked = state.filters.indexOf(c) > -1;
     var b = document.createElement('button');
-    b.className = 'sidebar-cat-btn' + (state.filter === c ? ' active' : '');
-    b.innerHTML = '<span>' + c + '</span><span class="n">' + n.toLocaleString('ko-KR') + '</span>';
-    b.onclick = function(){ state.filter = c; state.page = 1; render(); };
+    b.className = 'sidebar-cat-btn sidebar-check-btn' + (checked ? ' active' : '');
+    b.innerHTML = '<span class="box">' + (checked ? '✓' : '') + '</span><span class="lbl">' + c + '(' + n.toLocaleString('ko-KR') + ')</span>';
+    b.onclick = function(){
+      var idx = state.filters.indexOf(c);
+      if(idx > -1){ state.filters.splice(idx, 1); } else { state.filters.push(c); }
+      state.page = 1;
+      render();
+    };
     bar.appendChild(b);
   });
+  var toggleEl = document.getElementById('catFilterToggle');
+  if(toggleEl) toggleEl.textContent = catFilterCollapsed ? '⌄' : '⌃';
+  bar.classList.toggle('collapsed', catFilterCollapsed);
 }
 
 var CERT_FILTERS = [
@@ -1784,11 +1850,12 @@ function renderCertFilters(){
   bar.innerHTML = '';
   CERT_FILTERS.forEach(function(cf){
     var b = document.createElement('button');
-    var active = state.certFilter === cf.key;
+    var active = state.certFilters.indexOf(cf.key) > -1;
     b.className = 'sidebar-cert-btn' + (active ? ' active' : '');
     b.innerHTML = '<span class="box">' + (active ? '✓' : '') + '</span><span>' + cf.key + '</span>';
     b.onclick = function(){
-      state.certFilter = active ? '전체' : cf.key;
+      var idx = state.certFilters.indexOf(cf.key);
+      if(idx > -1){ state.certFilters.splice(idx, 1); } else { state.certFilters.push(cf.key); }
       state.page = 1;
       render();
     };
@@ -1875,18 +1942,19 @@ function renderSidebarLists(){
 
 function visibleProducts(){
   return PRODUCTS.filter(function(p){
-    var matchCat = state.filter === "전체" || p.cat === state.filter;
+    // 세부품명(카테고리)은 여러 개 선택 시 합집합(OR) — 품목당 분류가 하나뿐이므로 여러 개를 동시에 만족할 수 없습니다.
+    var matchCat = state.filters.length === 0 || state.filters.indexOf(p.cat) > -1;
     var q = state.query.trim().toLowerCase();
     var matchQ = q === "" ||
       p.name.toLowerCase().indexOf(q) > -1 ||
       p.code.toLowerCase().indexOf(q) > -1 ||
       p.g2b.toLowerCase().indexOf(q) > -1 ||
       p.spec.toLowerCase().indexOf(q) > -1;
-    var matchCert = true;
-    if(state.certFilter !== "전체"){
-      var cf = CERT_FILTERS.filter(function(c){ return c.key === state.certFilter; })[0];
-      matchCert = cf ? cf.test(p) : true;
-    }
+    // 인증 필터는 여러 개 선택 시 교집합(AND) — 선택한 인증을 모두 갖춘 품목만 남깁니다.
+    var matchCert = state.certFilters.every(function(key){
+      var cf = CERT_FILTERS.filter(function(c){ return c.key === key; })[0];
+      return cf ? cf.test(p) : true;
+    });
     return matchCat && matchQ && matchCert;
   }).sort(function(a, b){
     if(state.sort === "price_asc") return a.price - b.price;
@@ -1930,7 +1998,9 @@ function renderPagination(totalItems){
 function renderGrid(){
   var grid = document.getElementById('grid');
   var all = visibleProducts();
-  document.getElementById('countText').textContent = state.filter + ' ' + all.length + '건';
+  var filterLabel = state.filters.length === 0 ? '전체' :
+    (state.filters.length === 1 ? state.filters[0] : state.filters.length + '개 항목 선택');
+  document.getElementById('countText').textContent = filterLabel + ' ' + all.length + '건';
   var start = (state.page - 1) * state.pageSize;
   var items = all.slice(start, start + state.pageSize);
   grid.innerHTML = '';
@@ -2029,20 +2099,26 @@ function copyItemKeysToRoom(keys, targetRoomId){
 }
 
 // 견적서 화면에서 품목 행을 다른 공간의 그룹 영역 위로 직접 드래그해 놓는 기능.
-// 기본 동작은 "이동"(원래 공간에서 삭제 후 대상 공간에 추가)이며,
-// Ctrl 키를 누른 채 드롭하면 "복사"(원본은 그대로 두고 대상 공간에 추가)로 동작합니다.
+// 같은 층 안에서 공간을 옮길 때는 "이동"(원래 공간에서 삭제 후 대상 공간에 추가),
+// 다른 층의 공간으로 옮길 때는 "복사"(원본은 그대로 두고 대상 공간에도 추가)로 자동 동작합니다
+// (다른 층에 같은 품목이 추가로 필요한 경우가 많다는 실무 흐름에 맞춘 기본값입니다).
+// Ctrl 키를 누른 채 드롭하면 이 기본 규칙을 반대로 뒤집을 수 있습니다
+// (같은 층인데 Ctrl → 복사, 다른 층인데 Ctrl → 이동).
 // 복사 시 대상 공간에 이미 같은 품목이 있으면 수량을 그 품목 분량만큼 합치지 않고 1개만 더합니다
 // (전체 수량을 그대로 합치는 기존 "선택 복사/붙여넣기" 기능과는 의도적으로 다른 동작입니다).
-function moveOrCopyItemKeysToRoom(keys, targetRoomId, isCopy){
+function moveOrCopyItemKeysToRoom(keys, targetRoomId, ctrlKey){
   var targetRoom = findRoom(targetRoomId);
   if(!targetRoom){ showToast('대상 공간을 찾을 수 없습니다'); return; }
-  var count = 0;
+  var movedCount = 0, copiedCount = 0;
   keys.forEach(function(key){
     var sep = key.indexOf('||');
     var roomId = key.slice(0, sep), code = key.slice(sep + 2);
     if(roomId === targetRoomId) return; // 같은 공간으로는 이동/복사하지 않음
     var srcRoom = findRoom(roomId);
     if(!srcRoom || !srcRoom.items[code]) return;
+    var sameFloor = srcRoom.floor === targetRoom.floor;
+    // 기본: 같은 층 = 이동, 다른 층 = 복사. Ctrl을 누르면 반대로 뒤집힙니다.
+    var isCopy = ctrlKey ? sameFloor : !sameFloor;
     var srcQty = srcRoom.items[code];
     var hadTargetAlready = !!targetRoom.items[code];
 
@@ -2067,15 +2143,20 @@ function moveOrCopyItemKeysToRoom(keys, targetRoomId, isCopy){
       if(srcRoom.specOverrides) delete srcRoom.specOverrides[code];
       if(srcRoom.priceOverrides) delete srcRoom.priceOverrides[code];
       selectedItemKeys.delete(key);
+      movedCount++;
+    } else {
+      copiedCount++;
     }
-    count++;
   });
-  if(count > 0){
-    showToast(count + '개 품목을 ' + targetRoom.floor + ' ' + targetRoom.name + '(으)로 ' + (isCopy ? '복사' : '이동') + '했습니다');
+  if(movedCount > 0 || copiedCount > 0){
+    var parts = [];
+    if(movedCount > 0) parts.push(movedCount + '개 이동');
+    if(copiedCount > 0) parts.push(copiedCount + '개 복사');
+    showToast(parts.join(' · ') + ' → ' + targetRoom.floor + ' ' + targetRoom.name);
     renderQuote();
     renderRoomChips();
   } else {
-    showToast((isCopy ? '복사' : '이동') + '할 품목이 없습니다 (같은 공간으로는 동작하지 않습니다)');
+    showToast('이동/복사할 품목이 없습니다 (같은 공간으로는 동작하지 않습니다)');
   }
 }
 
@@ -2366,7 +2447,7 @@ function renderQuote(){
     wrap.innerHTML = '<div class="empty-quote">공간을 추가하고 카탈로그에서 품목을 담아주세요</div>';
   } else {
     var html = '<table class="qtable"><thead><tr>' +
-      '<th class="col-check"></th><th>코드</th><th>이미지</th><th>품목</th><th>규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
+      '<th>코드</th><th>이미지</th><th>품목</th><th>규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
       '</tr></thead>';
 
     floors.forEach(function(floor){
@@ -2376,10 +2457,10 @@ function renderQuote(){
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
         var codes = getOrderedCodes(room);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room"><td colspan="10">' + room.name + '</td></tr>';
+        var roomHtml = '<tr class="grp-room"><td colspan="9">' + room.name + '</td></tr>';
 
         if(codes.length === 0){
-          roomHtml += '<tr><td colspan="10" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
+          roomHtml += '<tr><td colspan="9" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
         } else {
           roomsWithItems++;
           codes.forEach(function(code){
@@ -2405,7 +2486,6 @@ function renderQuote(){
               '<span class="field-label">단가</span><span class="field-value">' + fmt(priceVal) + '</span>';
             roomHtml +=
               '<tr class="' + (isSelected ? 'row-selected' : '') + '" data-room-id="' + room.id + '" data-code="' + code + '">' +
-                '<td class="row-check"><input type="checkbox" class="item-select-cb" data-room-id="' + room.id + '" data-code="' + code + '"' + (isSelected ? ' checked' : '') + '></td>' +
                 '<td class="row-code">' + p.code + '</td>' +
                 '<td class="row-thumb-cell"><div class="row-thumb" data-thumb-code="' + code + '">' + IMG_ICON + '</div></td>' +
                 '<td class="row-name">' + p.name + '</td>' +
@@ -2418,19 +2498,19 @@ function renderQuote(){
               '</tr>';
           });
         }
-        roomHtml += '<tr class="subtot-room"><td colspan="10">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
+        roomHtml += '<tr class="subtot-room"><td colspan="9">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
         floorTotal += roomTotal;
         floorHasRows = true;
         floorRoomsHtml += '<tbody class="room-group" data-room-id="' + room.id + '">' + roomHtml + '</tbody>';
       });
 
-      html += '<tbody><tr class="grp-floor"><td colspan="10">' + floor + '</td></tr></tbody>';
+      html += '<tbody><tr class="grp-floor"><td colspan="9">' + floor + '</td></tr></tbody>';
       html += floorRoomsHtml;
-      html += '<tbody><tr class="subtot-floor"><td colspan="10">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr></tbody>';
+      html += '<tbody><tr class="subtot-floor"><td colspan="9">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr></tbody>';
       grandTotal += floorTotal;
     });
 
-    html += '<tbody><tr class="grand-total"><td colspan="10">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr></tbody>';
+    html += '<tbody><tr class="grand-total"><td colspan="9">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr></tbody>';
     html += '</table>';
     wrap.innerHTML = html;
 
@@ -2446,6 +2526,7 @@ function renderQuote(){
       function commit(){ setQty(roomId, code, inp.value); }
       inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') commit(); });
       inp.addEventListener('blur', commit);
+      inp.addEventListener('click', function(e){ e.stopPropagation(); });
     });
     wrap.querySelectorAll('.spec-input').forEach(function(inp){
       var row = inp.closest('tr');
@@ -2475,24 +2556,24 @@ function renderQuote(){
       inp.addEventListener('click', function(e){ e.stopPropagation(); });
     });
     wrap.querySelectorAll('.row-remove').forEach(function(btn){
-      btn.onclick = function(){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
         var row = btn.closest('tr');
         var roomId = row.getAttribute('data-room-id');
         var code = row.getAttribute('data-code');
         if(roomId) removeItem(roomId, code);
-      };
+      });
     });
 
-    // 5. 품목 복사 — 체크박스 다중선택 (PC 드래그앤드롭 / 모바일 복사버튼의 공통 트리거)
-    wrap.querySelectorAll('.item-select-cb').forEach(function(cb){
-      cb.addEventListener('change', function(){
-        var key = cb.getAttribute('data-room-id') + '||' + cb.getAttribute('data-code');
-        if(cb.checked){ selectedItemKeys.add(key); } else { selectedItemKeys.delete(key); }
-        var row = cb.closest('tr');
-        if(row) row.classList.toggle('row-selected', cb.checked);
+    // 5. 품목 선택 — 행을 클릭하면 선택/해제 토글 (체크박스 대신, PC 드래그앤드롭 / 모바일 복사버튼의 공통 트리거)
+    wrap.querySelectorAll('tr[data-room-id][data-code]').forEach(function(row){
+      row.addEventListener('click', function(){
+        var key = row.getAttribute('data-room-id') + '||' + row.getAttribute('data-code');
+        var nowSelected = !selectedItemKeys.has(key);
+        if(nowSelected){ selectedItemKeys.add(key); } else { selectedItemKeys.delete(key); }
+        row.classList.toggle('row-selected', nowSelected);
         renderCopyBar();
       });
-      cb.addEventListener('click', function(e){ e.stopPropagation(); });
     });
     if(POINTER_FINE){
       wrap.querySelectorAll('tr[data-room-id][data-code]').forEach(function(row){
@@ -2543,21 +2624,28 @@ function renderQuote(){
           currentDragKeys = null;
         });
       });
-      // 견적서 내 공간별 그룹 영역에 직접 드롭 — 기본은 이동, Ctrl을 누른 채 놓으면 복사
+      // 견적서 내 공간별 그룹 영역에 직접 드롭 — 같은 층은 이동, 다른 층은 자동 복사 (Ctrl로 반대 동작)
       wrap.querySelectorAll('tbody.room-group').forEach(function(tbody){
         var targetRoomId = tbody.getAttribute('data-room-id');
+        var targetRoom = findRoom(targetRoomId);
         tbody.addEventListener('dragover', function(e){
-          if(!currentDragKeys) return;
+          if(!currentDragKeys || !currentDragKeys.length) return;
           e.preventDefault();
-          e.dataTransfer.dropEffect = e.ctrlKey ? 'copy' : 'move';
+          var sep = currentDragKeys[0].indexOf('||');
+          var srcRoom = findRoom(currentDragKeys[0].slice(0, sep));
+          var sameFloor = srcRoom && targetRoom && srcRoom.floor === targetRoom.floor;
+          var isCopy = e.ctrlKey ? sameFloor : !sameFloor;
+          e.dataTransfer.dropEffect = isCopy ? 'copy' : 'move';
+          tbody.classList.toggle('drop-hover-copy', isCopy);
+          tbody.classList.toggle('drop-hover-move', !isCopy);
           tbody.classList.add('drop-hover');
         });
         tbody.addEventListener('dragleave', function(){
-          tbody.classList.remove('drop-hover');
+          tbody.classList.remove('drop-hover', 'drop-hover-copy', 'drop-hover-move');
         });
         tbody.addEventListener('drop', function(e){
           e.preventDefault();
-          tbody.classList.remove('drop-hover');
+          tbody.classList.remove('drop-hover', 'drop-hover-copy', 'drop-hover-move');
           if(currentDragKeys && currentDragKeys.length){
             moveOrCopyItemKeysToRoom(currentDragKeys, targetRoomId, e.ctrlKey);
             currentDragKeys = null;
@@ -2645,7 +2733,7 @@ function waitForRowThumbImages(maxWaitMs){
   });
 }
 
-document.getElementById('printBtn').addEventListener('click', function(){
+function runPrintFlow(){
   var building = document.getElementById('buildingInput').value.trim() || '-';
   var managerName = document.getElementById('managerNameInput').value.trim();
   var managerPhone = document.getElementById('managerPhoneInput').value.trim();
@@ -2680,7 +2768,11 @@ document.getElementById('printBtn').addEventListener('click', function(){
   waitForRowThumbImages(1200).then(function(){
     window.print();
   });
-});
+}
+
+document.getElementById('printBtn').addEventListener('click', runPrintFlow);
+var printBtnTopEl = document.getElementById('printBtnTop');
+if(printBtnTopEl) printBtnTopEl.addEventListener('click', runPrintFlow);
 
 window.addEventListener('afterprint', function(){
   document.title = ORIGINAL_DOC_TITLE;
@@ -2741,9 +2833,55 @@ if(pasteCancelBtnEl){
   updateSpacebarHeight();
 })();
 
+function renderActiveFilterChips(){
+  var wrap = document.getElementById('activeFilterChips');
+  if(!wrap) return;
+  var html = '';
+  state.filters.forEach(function(c){
+    html += '<span class="active-filter-chip" data-kind="cat" data-value="' + c.replace(/"/g,'&quot;') + '">' + c + '<span class="chip-x" title="필터 해제">✕</span></span>';
+  });
+  state.certFilters.forEach(function(c){
+    html += '<span class="active-filter-chip" data-kind="cert" data-value="' + c.replace(/"/g,'&quot;') + '">' + c + '<span class="chip-x" title="필터 해제">✕</span></span>';
+  });
+  wrap.innerHTML = html;
+  wrap.querySelectorAll('.active-filter-chip').forEach(function(chip){
+    chip.querySelector('.chip-x').addEventListener('click', function(){
+      var kind = chip.getAttribute('data-kind');
+      var value = chip.getAttribute('data-value');
+      var arr = kind === 'cat' ? state.filters : state.certFilters;
+      var idx = arr.indexOf(value);
+      if(idx > -1) arr.splice(idx, 1);
+      state.page = 1;
+      render();
+    });
+  });
+}
+
+function resetAllFilters(){
+  state.filters = [];
+  state.certFilters = [];
+  state.query = '';
+  var searchInputEl = document.getElementById('searchInput');
+  if(searchInputEl) searchInputEl.value = '';
+  state.page = 1;
+  render();
+}
+
+var filterResetBtnEl = document.getElementById('filterResetBtn');
+if(filterResetBtnEl) filterResetBtnEl.addEventListener('click', resetAllFilters);
+
+var catFilterToggleEl = document.getElementById('catFilterTitle');
+if(catFilterToggleEl){
+  catFilterToggleEl.addEventListener('click', function(){
+    catFilterCollapsed = !catFilterCollapsed;
+    renderFilters();
+  });
+}
+
 function render(){
   renderFilters();
   renderCertFilters();
+  renderActiveFilterChips();
   renderSidebarLists();
   renderGrid();
   renderRoomChips();
