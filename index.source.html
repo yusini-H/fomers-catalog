@@ -364,6 +364,20 @@
     margin:0 0 8px;padding-bottom:6px;border-bottom:1px dashed var(--line);
   }
   .sidebar-list{display:flex;flex-direction:column;gap:2px;}
+  #filterBar{max-height:260px;overflow-y:auto;}
+  .cat-filter-search{position:relative;margin-bottom:8px;}
+  .cat-filter-search.collapsed{display:none;}
+  .cat-filter-search input{
+    width:100%;padding:7px 26px 7px 9px;border:1px solid var(--line);border-radius:6px;
+    font-family:'IBM Plex Sans KR',sans-serif;font-size:11.5px;outline:none;box-sizing:border-box;
+  }
+  .cat-filter-search input:focus{border-color:var(--teal);}
+  .cat-filter-search button{
+    position:absolute;right:4px;top:50%;transform:translateY(-50%);
+    width:18px;height:18px;border:none;background:transparent;color:var(--ink-3);
+    cursor:pointer;font-size:11px;
+  }
+  .cat-filter-search button:hover{color:var(--ink);}
   .sidebar-cat-btn{
     display:flex;justify-content:space-between;align-items:center;gap:6px;
     width:100%;text-align:left;padding:7px 8px;
@@ -680,6 +694,13 @@
     background:var(--paper-dim);font-family:'IBM Plex Mono',monospace;
     font-size:11.5px;color:var(--ink-3);font-weight:600;padding:6px 8px;
   }
+  tr.grp-room[data-room-id]{ cursor:pointer; }
+  tr.grp-room[data-room-id]:hover td{ background:var(--teal-light);color:var(--teal-dark); }
+  .grp-room-drop-hint{
+    font-weight:400;font-size:10px;color:var(--ink-3);margin-left:8px;
+    opacity:0;transition:opacity .12s;
+  }
+  tr.grp-room[data-room-id]:hover .grp-room-drop-hint{ opacity:1;color:var(--teal-dark); }
   .row-code{
     font-family:'IBM Plex Mono',monospace;font-size:11px;color:#374151;
     background:#F3F4F6;border-radius:999px;padding:3px 9px;display:inline-block;
@@ -737,64 +758,14 @@
   /* 썸네일 이미지가 브라우저 기본 이미지 드래그를 가로채 행 드래그가 씹히는 것을 방지합니다 */
   .row-thumb img{ -webkit-user-drag:none; user-select:none; pointer-events:none; }
   .drag-hint{
-    display:none;
+    display:block;
     font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-dark);
     background:var(--teal-light);border:1px dashed var(--teal);border-radius:6px;
     padding:8px 10px;margin:0 0 10px;
   }
   @media (pointer:fine){
     tr[data-room-id][data-code]{ cursor:grab; }
-    .drag-hint.show{ display:block; }
   }
-  .copy-select-bar{ display:none; }
-  .copy-select-bar.show{
-    display:flex;
-    position:fixed;
-    left:0; right:0; bottom:0;
-    z-index:70;
-    align-items:center;
-    gap:8px;
-    flex-wrap:wrap;
-    background:var(--ink);
-    color:var(--paper);
-    padding:10px 14px;
-    font-family:'IBM Plex Mono',monospace;
-    font-size:12px;
-    border-top:2px solid var(--teal);
-    box-shadow:0 -2px 10px rgba(19,42,58,.18);
-  }
-  .copy-select-bar .csb-group{
-    display:none;align-items:center;gap:8px;flex-wrap:wrap;
-  }
-  .copy-select-bar .csb-group.show{ display:flex; }
-  .copy-select-bar .csb-paste-group{
-    flex-direction:column;align-items:stretch;width:100%;gap:8px;
-  }
-  .paste-room-list{
-    max-height:150px;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    display:flex;flex-direction:column;gap:2px;
-    background:var(--ink-3);border-radius:6px;padding:6px;
-  }
-  .paste-room-list .prl-floor{
-    font-size:10px;color:#8FA6B8;padding:6px 8px 2px;
-    text-transform:uppercase;letter-spacing:.03em;
-  }
-  .paste-room-list .prl-room{
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-    padding:9px 10px;border-radius:4px;cursor:pointer;
-    font-size:12px;color:var(--paper);background:transparent;
-  }
-  .paste-room-list .prl-room:active{ background:rgba(255,255,255,.1); }
-  .paste-room-list .prl-room.active{ background:var(--teal);color:#fff;font-weight:600; }
-  .paste-room-list .prl-room .prl-check{ font-size:11px;opacity:0; }
-  .paste-room-list .prl-room.active .prl-check{ opacity:1; }
-  .paste-actions{ display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
-  .copy-select-bar button{
-    font-family:'IBM Plex Mono',monospace;font-size:11px;border:none;padding:7px 10px;cursor:pointer;
-  }
-  .copy-select-bar button:disabled{ opacity:.45;cursor:not-allowed; }
-  .copy-select-bar #copySelectBtn, .copy-select-bar #pasteBtn{ background:var(--teal);color:#fff; }
-  .copy-select-bar #copySelectCancelBtn, .copy-select-bar #pasteCancelBtn{ background:var(--ink-3);color:var(--paper); }
   .subtot-room td{
     background:var(--paper-dim);font-family:'IBM Plex Mono',monospace;font-size:11.5px;
     color:var(--teal-dark);text-align:right;font-weight:600;padding:6px 8px;border-bottom:1px dashed var(--line);
@@ -1093,8 +1064,8 @@
     .row-check, .col-check{ display:none !important; }
     .quote-head{ border-top:none; }
     .spec-input{ border:none;background:transparent;padding:0;color:var(--ink-3); }
-    .qty-input{ border:none;background:transparent;padding:0;color:var(--ink);text-align:right;width:auto; }
-    .price-input{ border:none;background:transparent;padding:0;color:var(--ink);text-align:right;width:auto; }
+    .qty-input{ border:none;background:transparent;padding:0;color:var(--ink);text-align:right;width:100%;box-sizing:border-box; }
+    .price-input{ border:none;background:transparent;padding:0;color:var(--ink);text-align:right;width:100%;box-sizing:border-box; }
     .field-label{ display:none; }
     /* 인쇄 시 제품 이미지가 너무 작게 나오는 문제 → 인쇄 전용으로 큼직하게 확대 */
     .row-thumb{ width:56px;height:56px;border-radius:8px; }
@@ -1140,6 +1111,29 @@
     .subtot-room td{ background:#F3F4F6 !important;color:var(--teal-dark) !important; }
     .subtot-floor td{ background:#EEF1F4 !important;color:#1F2937 !important; }
     tr.grand-total td{ background:var(--teal-dark) !important;color:#fff !important; }
+
+    /* 인쇄용 표 — 열 너비를 고정해서 헤더(코드/이미지/품목/규격/수량/단가/총금액/G2B번호)와
+       본문 행의 칸이 정확히 맞도록 하고, 코드/규격이 잘리거나 두 줄로 깨지는 문제를 방지합니다. */
+    /* colspan이 있는 그룹/소계 행이 중간에 여러 번 끼어 있어도(층/공간 구분 행) 열 너비가
+       흔들리지 않도록, 표의 첫 행 너비 추정이 아니라 <colgroup>으로 직접 고정합니다. */
+    table.qtable{ table-layout:fixed; width:100%; }
+    .qcol-code{ width:13%; }
+    .qcol-thumb{ width:8%; }
+    .qcol-name{ width:17%; }
+    .qcol-spec{ width:20%; }
+    .qcol-qty{ width:6%; }
+    .qcol-price{ width:10%; }
+    .qcol-total{ width:11%; }
+    .qcol-g2b{ width:12%; }
+    .qcol-remove{ width:3%; }
+    .row-code{
+      white-space:normal; word-break:break-all; line-height:1.25;
+      font-size:10px; padding:2px 5px; border-radius:4px;
+    }
+    .row-spec{ overflow-wrap:break-word; word-break:break-word; white-space:normal; }
+    .row-name{ overflow-wrap:break-word; }
+    /* 할인율(%) 입력칸은 내부 조정용이라 정식 견적서(PDF)에는 노출하지 않습니다 */
+    .price-pct-input{ display:none !important; }
   }
 
   /* ── 하단 푸터 (사업자 정보) ── */
@@ -1293,6 +1287,10 @@
     <div class="active-filter-chips" id="activeFilterChips"></div>
     <div class="sidebar-section">
       <p class="sidebar-title sidebar-title-collapsible" id="catFilterTitle">세부품명 <span class="collapse-toggle" id="catFilterToggle">⌃</span></p>
+      <div class="cat-filter-search">
+        <input id="catFilterSearchInput" type="text" placeholder="세부품명을 입력하세요">
+        <button type="button" id="catFilterSearchClear" title="지우기">✕</button>
+      </div>
       <div class="sidebar-list" id="filterBar"></div>
     </div>
     <div class="sidebar-section">
@@ -1371,7 +1369,7 @@
         <button class="print-btn no-print" id="printBtn" type="button">인쇄 / PDF 저장</button>
       </div>
 
-      <p class="drag-hint no-print" id="dragHint">✓ 선택한 품목을 왼쪽 공간칩으로 드래그하거나, 화면 하단에서 [복사]를 누른 뒤 붙여넣을 공간으로 이동해 [붙여넣기]를 누르세요 (원본은 유지됩니다)</p>
+      <p class="drag-hint no-print" id="dragHint">✓ 품목을 클릭해 선택한 뒤, 원하는 공간으로 드래그하거나 목록을 스크롤해서 해당 공간 이름을 클릭하면 이동/복사됩니다 — 같은 층은 이동, 다른 층은 복사됩니다 (Ctrl로 반대 동작)</p>
       <div id="quoteWrap"></div>
       <p class="quote-note">데모 버전 · 실제 계약가/재고 확인 후 정식 견적서로 전환됩니다</p>
     </div>
@@ -1396,22 +1394,6 @@
 <div class="mobile-bottom-bar no-print" id="mobileBottomBar">
   <div class="mbb-info">담긴 품목 <b id="mbbCount">0</b>개 · 총 <b id="mbbTotal">0원</b></div>
   <button class="mbb-toggle" id="mbbToggle" type="button">펼치기</button>
-</div>
-
-<div class="copy-select-bar no-print" id="copySelectBar">
-  <div class="csb-group" id="csbSelectGroup">
-    <span id="copySelectCount">0개 선택됨</span>
-    <button id="copySelectBtn" type="button">복사</button>
-    <button id="copySelectCancelBtn" type="button">선택 취소</button>
-  </div>
-  <div class="csb-group csb-paste-group" id="csbPasteGroup">
-    <span id="pasteInfo">0개 복사됨 · 붙여넣을 공간을 선택하세요</span>
-    <div class="paste-room-list" id="pasteRoomList"></div>
-    <div class="paste-actions">
-      <button id="pasteBtn" type="button">여기에 붙여넣기</button>
-      <button id="pasteCancelBtn" type="button">복사 취소</button>
-    </div>
-  </div>
 </div>
 
 </div><!-- /#catalogView -->
@@ -1804,20 +1786,26 @@ function loadProducts(cb){
   }
 }
 
-function categories(){
+// "세부품명" 필터는 대분류(cat, 예: 사무용가구/교육기관용가구)가 아니라
+// 실제 품목명(name, 예: 책상/의자/사물함처럼 훨씬 세부적인 단위) 기준으로 묶습니다.
+function itemNames(){
   var set = [];
-  PRODUCTS.forEach(function(p){ if(p.cat && set.indexOf(p.cat) === -1) set.push(p.cat); });
-  return set;
+  PRODUCTS.forEach(function(p){ if(p.name && set.indexOf(p.name) === -1) set.push(p.name); });
+  return set.sort(function(a, b){ return a.localeCompare(b, 'ko'); });
 }
 
 var catFilterCollapsed = false;
+var catFilterQuery = '';
 
 function renderFilters(){
   var bar = document.getElementById('filterBar');
   bar.innerHTML = '';
   var counts = {};
-  PRODUCTS.forEach(function(p){ counts[p.cat] = (counts[p.cat]||0) + 1; });
-  categories().forEach(function(c){
+  PRODUCTS.forEach(function(p){ counts[p.name] = (counts[p.name]||0) + 1; });
+  var q = catFilterQuery.trim().toLowerCase();
+  itemNames().filter(function(c){
+    return q === '' || c.toLowerCase().indexOf(q) > -1;
+  }).forEach(function(c){
     var n = counts[c] || 0;
     var checked = state.filters.indexOf(c) > -1;
     var b = document.createElement('button');
@@ -1834,6 +1822,8 @@ function renderFilters(){
   var toggleEl = document.getElementById('catFilterToggle');
   if(toggleEl) toggleEl.textContent = catFilterCollapsed ? '⌄' : '⌃';
   bar.classList.toggle('collapsed', catFilterCollapsed);
+  var searchBoxEl = document.querySelector('.cat-filter-search');
+  if(searchBoxEl) searchBoxEl.classList.toggle('collapsed', catFilterCollapsed);
 }
 
 var CERT_FILTERS = [
@@ -1942,8 +1932,8 @@ function renderSidebarLists(){
 
 function visibleProducts(){
   return PRODUCTS.filter(function(p){
-    // 세부품명(카테고리)은 여러 개 선택 시 합집합(OR) — 품목당 분류가 하나뿐이므로 여러 개를 동시에 만족할 수 없습니다.
-    var matchCat = state.filters.length === 0 || state.filters.indexOf(p.cat) > -1;
+    // 세부품명은 여러 개 선택 시 합집합(OR) — 품목당 품명이 하나뿐이므로 여러 개를 동시에 만족할 수 없습니다.
+    var matchCat = state.filters.length === 0 || state.filters.indexOf(p.name) > -1;
     var q = state.query.trim().toLowerCase();
     var matchQ = q === "" ||
       p.name.toLowerCase().indexOf(q) > -1 ||
@@ -2058,11 +2048,9 @@ var pendingRemoveRoomId = null;
 var pendingRemoveTimer = null;
 var editingRoomId = null; // ✎ 아이콘으로 층/실명을 수정 중인 공간의 id
 
-// 5. 품목 복사 기능 — 체크박스로 선택된 (공간ID||코드) 목록.
-//    PC는 드래그앤드롭으로 즉시 복사할 수 있고, 모든 기기에서 하단 바의
-//    [복사] → (공간 이동) → [붙여넣기] 두 단계 방식으로도 동일한 copyItemKeysToRoom()을 호출합니다.
+// 5. 품목 선택/이동/복사 — 행을 클릭해 선택된 (공간ID||코드) 목록.
+//    PC는 선택 후 드래그앤드롭으로 즉시 이동/복사할 수 있습니다 (마우스 전용 기기 한정).
 var selectedItemKeys = new Set();
-var copyClipboard = []; // [복사] 클릭 시 확정되는, 아직 붙여넣지 않은 키 목록 (여러 공간에 반복 붙여넣기 가능)
 var currentDragKeys = null; // dragstart 시점에 확정되는, 이번 드래그로 복사할 키 목록
 var draggingChipRoomId = null; // 공간 칩을 드래그해 순서를 바꿀 때, 드래그 중인 공간의 id
 var POINTER_FINE = window.matchMedia('(pointer:fine)').matches;
@@ -2095,7 +2083,6 @@ function copyItemKeysToRoom(keys, targetRoomId){
   } else {
     showToast('복사할 품목이 없습니다 (같은 공간으로는 복사되지 않습니다)');
   }
-  renderCopyBar();
 }
 
 // 견적서 화면에서 품목 행을 다른 공간의 그룹 영역 위로 직접 드래그해 놓는 기능.
@@ -2158,63 +2145,6 @@ function moveOrCopyItemKeysToRoom(keys, targetRoomId, ctrlKey){
   } else {
     showToast('이동/복사할 품목이 없습니다 (같은 공간으로는 동작하지 않습니다)');
   }
-}
-
-function renderCopyBar(){
-  var bar = document.getElementById('copySelectBar');
-  var hint = document.getElementById('dragHint');
-  var selCount = selectedItemKeys.size;
-  var clipCount = copyClipboard.length;
-  if(hint) hint.classList.toggle('show', selCount > 0 || clipCount > 0);
-  if(!bar) return;
-
-  var selGroup = document.getElementById('csbSelectGroup');
-  if(selGroup){
-    selGroup.classList.toggle('show', selCount > 0);
-    var countEl = document.getElementById('copySelectCount');
-    if(countEl) countEl.textContent = selCount + '개 선택됨';
-  }
-
-  var pasteGroup = document.getElementById('csbPasteGroup');
-  if(pasteGroup){
-    pasteGroup.classList.toggle('show', clipCount > 0);
-    var ar = findRoom(state.activeRoomId);
-    var infoEl = document.getElementById('pasteInfo');
-    if(infoEl){
-      infoEl.textContent = clipCount + '개 복사됨 · 붙여넣을 공간을 아래에서 선택하세요';
-    }
-
-    var listEl = document.getElementById('pasteRoomList');
-    if(listEl && clipCount > 0){
-      var floors = [];
-      state.rooms.forEach(function(r){ if(floors.indexOf(r.floor) === -1) floors.push(r.floor); });
-      var listHtml = '';
-      floors.forEach(function(floor){
-        listHtml += '<div class="prl-floor">' + floor + '</div>';
-        state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
-          var isActive = room.id === state.activeRoomId;
-          listHtml += '<div class="prl-room' + (isActive ? ' active' : '') + '" data-room-id="' + room.id + '">' +
-            '<span>' + room.name + '</span><span class="prl-check">✓ 선택됨</span>' +
-          '</div>';
-        });
-      });
-      listEl.innerHTML = listHtml || '<div class="prl-floor">붙여넣을 공간이 없습니다 · 공간을 먼저 추가해주세요</div>';
-      listEl.querySelectorAll('.prl-room').forEach(function(row){
-        row.addEventListener('click', function(){
-          state.activeRoomId = row.getAttribute('data-room-id');
-          render();
-        });
-      });
-    }
-
-    var pasteBtn = document.getElementById('pasteBtn');
-    if(pasteBtn){
-      pasteBtn.disabled = !ar;
-      pasteBtn.textContent = ar ? (ar.floor + ' ' + ar.name + '에 붙여넣기') : '여기에 붙여넣기';
-    }
-  }
-
-  bar.classList.toggle('show', selCount > 0 || clipCount > 0);
 }
 
 function renderRoomChips(){
@@ -2305,7 +2235,6 @@ function renderRoomChips(){
   });
   var ar = findRoom(state.activeRoomId);
   document.getElementById('activeNote').textContent = state.rooms.length + '개 공간' + (ar ? (' · 현재 담는 위치 → ' + ar.floor + ' ' + ar.name) : ' · 공간을 선택하세요');
-  renderCopyBar();
 }
 
 function requestRemoveRoom(id){
@@ -2381,7 +2310,6 @@ function removeItem(roomId, code){
   if(room.priceOverrides) delete room.priceOverrides[code];
   selectedItemKeys.delete(roomId + '||' + code);
   renderQuote();
-  renderCopyBar();
 }
 
 function setPrice(roomId, code, value){
@@ -2446,7 +2374,12 @@ function renderQuote(){
   if(state.rooms.length === 0 || floors.length === 0){
     wrap.innerHTML = '<div class="empty-quote">공간을 추가하고 카탈로그에서 품목을 담아주세요</div>';
   } else {
-    var html = '<table class="qtable"><thead><tr>' +
+    var html = '<table class="qtable">' +
+      '<colgroup>' +
+        '<col class="qcol-code"><col class="qcol-thumb"><col class="qcol-name"><col class="qcol-spec">' +
+        '<col class="qcol-qty"><col class="qcol-price"><col class="qcol-total"><col class="qcol-g2b"><col class="qcol-remove">' +
+      '</colgroup>' +
+      '<thead><tr>' +
       '<th>코드</th><th>이미지</th><th>품목</th><th>규격</th><th>수량</th><th>단가</th><th>총금액</th><th class="col-g2b">G2B번호</th><th></th>' +
       '</tr></thead>';
 
@@ -2457,7 +2390,7 @@ function renderQuote(){
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
         var codes = getOrderedCodes(room);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room"><td colspan="9">' + room.name + '</td></tr>';
+        var roomHtml = '<tr class="grp-room" data-room-id="' + room.id + '"><td colspan="9">' + room.name + '<span class="grp-room-drop-hint no-print">클릭하여 선택한 품목 이동/복사</span></td></tr>';
 
         if(codes.length === 0){
           roomHtml += '<tr><td colspan="9" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
@@ -2565,14 +2498,23 @@ function renderQuote(){
       });
     });
 
-    // 5. 품목 선택 — 행을 클릭하면 선택/해제 토글 (체크박스 대신, PC 드래그앤드롭 / 모바일 복사버튼의 공통 트리거)
+    // 5. 품목 선택 — 행을 클릭하면 선택/해제 토글 (체크박스 대신, PC 드래그앤드롭의 다중선택 트리거)
     wrap.querySelectorAll('tr[data-room-id][data-code]').forEach(function(row){
       row.addEventListener('click', function(){
         var key = row.getAttribute('data-room-id') + '||' + row.getAttribute('data-code');
         var nowSelected = !selectedItemKeys.has(key);
         if(nowSelected){ selectedItemKeys.add(key); } else { selectedItemKeys.delete(key); }
         row.classList.toggle('row-selected', nowSelected);
-        renderCopyBar();
+      });
+    });
+    // 5-1. 드래그 없이도 이동/복사 가능하도록 — 품목을 선택한 뒤 목록을 스크롤해서
+    //      원하는 공간의 이름(그룹 헤더 행)을 클릭하면 그 공간으로 이동/복사됩니다.
+    //      (같은 층=이동, 다른 층=복사, Ctrl 클릭 시 반대로 동작 — 드래그와 동일한 규칙)
+    wrap.querySelectorAll('tr.grp-room[data-room-id]').forEach(function(tr){
+      tr.addEventListener('click', function(e){
+        if(!selectedItemKeys.size) return;
+        var targetRoomId = tr.getAttribute('data-room-id');
+        moveOrCopyItemKeysToRoom(Array.from(selectedItemKeys), targetRoomId, e.ctrlKey);
       });
     });
     if(POINTER_FINE){
@@ -2778,44 +2720,6 @@ window.addEventListener('afterprint', function(){
   document.title = ORIGINAL_DOC_TITLE;
 });
 
-// 5. 품목 복사 — 하단 바의 [복사] → (공간 이동) → [붙여넣기] 두 단계 방식
-var copySelectBtnEl = document.getElementById('copySelectBtn');
-var copySelectCancelBtnEl = document.getElementById('copySelectCancelBtn');
-var pasteBtnEl = document.getElementById('pasteBtn');
-var pasteCancelBtnEl = document.getElementById('pasteCancelBtn');
-
-if(copySelectBtnEl){
-  copySelectBtnEl.addEventListener('click', function(){
-    if(!selectedItemKeys.size){ showToast('복사할 품목을 먼저 선택해주세요'); return; }
-    copyClipboard = Array.from(selectedItemKeys);
-    selectedItemKeys.clear();
-    showToast(copyClipboard.length + '개 품목을 복사했습니다. 붙여넣을 공간으로 이동한 뒤 [붙여넣기]를 눌러주세요');
-    renderQuote();
-    renderCopyBar();
-  });
-}
-if(copySelectCancelBtnEl){
-  copySelectCancelBtnEl.addEventListener('click', function(){
-    selectedItemKeys.clear();
-    renderQuote();
-    renderCopyBar();
-  });
-}
-if(pasteBtnEl){
-  pasteBtnEl.addEventListener('click', function(){
-    if(!copyClipboard.length){ showToast('먼저 품목을 복사해주세요'); return; }
-    if(!state.activeRoomId){ showToast('붙여넣을 공간을 먼저 선택해주세요'); return; }
-    copyItemKeysToRoom(copyClipboard, state.activeRoomId);
-  });
-}
-if(pasteCancelBtnEl){
-  pasteCancelBtnEl.addEventListener('click', function(){
-    copyClipboard = [];
-    showToast('복사를 취소했습니다');
-    renderCopyBar();
-  });
-}
-
 // 상단 컨트롤 바(.spacebar)가 데스크톱에서 스크롤해도 고정되도록 sticky 처리했는데,
 // 공간칩이 늘어나 줄바꿈되는 등 바의 실제 높이가 바뀌면 사이드바/견적 패널의 sticky 위치도
 // 그만큼 밀려야 겹치지 않습니다. --spacebar-h 값을 실측해서 항상 최신 높이로 맞춰둡니다.
@@ -2861,8 +2765,11 @@ function resetAllFilters(){
   state.filters = [];
   state.certFilters = [];
   state.query = '';
+  catFilterQuery = '';
   var searchInputEl = document.getElementById('searchInput');
   if(searchInputEl) searchInputEl.value = '';
+  var catSearchInputEl = document.getElementById('catFilterSearchInput');
+  if(catSearchInputEl) catSearchInputEl.value = '';
   state.page = 1;
   render();
 }
@@ -2878,6 +2785,24 @@ if(catFilterToggleEl){
   });
 }
 
+var catFilterSearchInputEl = document.getElementById('catFilterSearchInput');
+var catFilterSearchClearEl = document.getElementById('catFilterSearchClear');
+if(catFilterSearchInputEl){
+  catFilterSearchInputEl.addEventListener('input', function(){
+    catFilterQuery = catFilterSearchInputEl.value;
+    renderFilters();
+  });
+  catFilterSearchInputEl.addEventListener('click', function(e){ e.stopPropagation(); });
+}
+if(catFilterSearchClearEl){
+  catFilterSearchClearEl.addEventListener('click', function(e){
+    e.stopPropagation();
+    catFilterQuery = '';
+    if(catFilterSearchInputEl) catFilterSearchInputEl.value = '';
+    renderFilters();
+  });
+}
+
 function render(){
   renderFilters();
   renderCertFilters();
@@ -2887,6 +2812,22 @@ function render(){
   renderRoomChips();
   renderQuote();
 }
+
+// ── 간단한 우클릭/개발자도구 단축키 차단 ──────────────────────────────
+// 주의: 이 코드는 가벼운 억제 효과만 있을 뿐, 실제 보안 조치가 아닙니다.
+// 브라우저 메뉴(F12/우클릭 "검사")나 단축키만 막을 뿐, 주소창에 "보기 원본"을 직접 입력하거나
+// 개발자도구를 메뉴로 여는 것, 확장 프로그램 등은 막을 수 없습니다. 진짜 소스 보호가 필요하다면
+// 저장소를 Private으로 전환하거나(단, GitHub Pages 무료 플랜은 Private 저장소에서 배포 불가),
+// 배포 직전 별도 난독화를 적용하는 것이 더 근본적인 방법입니다 — 이미 배포용 빌드는
+// esbuild로 변수명까지 압축/난독화된 상태로 나갑니다.
+document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+document.addEventListener('keydown', function(e){
+  var k = (e.key || '').toUpperCase();
+  var blockDevtools = k === 'F12' ||
+    ((e.ctrlKey || e.metaKey) && e.shiftKey && (k === 'I' || k === 'J' || k === 'C')) ||
+    ((e.ctrlKey || e.metaKey) && k === 'U');
+  if(blockDevtools) e.preventDefault();
+});
 
 loadProducts();
 
