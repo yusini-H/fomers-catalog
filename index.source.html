@@ -4,14 +4,47 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FOMERS 통합 카탈로그</title>
+<!--
+  Content-Security-Policy — 알려진 도메인만 허용하는 화이트리스트 방식입니다.
+  - script-src에 'unsafe-inline'이 남아있는 이유: 이 앱은 번들러 없는 단일 HTML로,
+    앱 로직 전체가 인라인 script 태그입니다(외부 .js 파일 없음). nonce/hash 기반으로
+    인라인 스크립트를 막으려면 esbuild 빌드 단계에서 최종 스크립트의 해시를 계산해
+    이 메타 태그에 매번 다시 넣는 절차가 필요한데, 그 빌드 자동화는 이번 라운드
+    범위 밖이라(향후 과제로 SECURITY_AUDIT 문서에 기록) 우선 화이트리스트 도메인
+    제한만 적용합니다. 즉 이 CSP는 "임의 외부 도메인에서 스크립트를 끌어오는 것"과
+    "데이터 유출 목적의 fetch/img 요청"은 막지만, 이스케이프 누락으로 인한 인라인
+    onerror= 같은 이벤트 핸들러 실행 자체는 막지 못합니다 — 그건 PHASE 6의 escHtml()
+    이스케이프가 실제 방어선입니다. CSP는 그 다음 방어선(2차 방어)입니다.
+  - img-src에 https: 전체를 허용한 이유: 제품 이미지 URL이 외부 Gist 데이터에 실려
+    오는 임의의 벤더 도메인이라(고정된 목록이 아님) 좁힐 수 없습니다.
+  - frame-ancestors는 GitHub Pages가 정적 파일만 서빙해 HTTP 응답 헤더를 커스텀할
+    수 없으므로 <meta> 태그로는 적용되지 않습니다(브라우저가 무시함) — 알고 있는
+    제약이며, 필요하면 Cloudflare 등 프록시를 앞단에 두어야 헤더로 적용 가능합니다.
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;
+  font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:;
+  img-src 'self' data: https:;
+  connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://gist.githubusercontent.com https://res.cloudinary.com;
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<!-- Google Fonts CSS 엔드포인트는 요청 User-Agent에 따라 응답 바이트가 달라져(콘텐츠 협상)
+     SRI 해시를 고정할 수 없습니다(공식적으로 알려진 제약) — integrity 미적용은 의도된 것입니다. -->
+<link rel="stylesheet" as="style" crossorigin="anonymous" integrity="sha384-SN6A48CJQjx946+DRb8wsoifC4a8ur9ZS6R+HCTgnBHOKCa6GLXAR3Qn8d1jztxg" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" integrity="sha384-yuGdyIzzYtOBlBG6JOWn+Ey9kpq7HocusNuxEGyyohr1eEyXpeEyehIIXC/hznw4" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" integrity="sha384-lI+CxEx/bCvWP1b0OK13j5HTrTZP7yf1xle8TVOFq2smz6KC1RChTarRV/RHP5PP" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" integrity="sha384-nwX2Qpkhc2sv6L0ZPkLefLGguao67toSowvePuQvGF6cG+8MUphGI2uI94Ls3JF7" crossorigin="anonymous"></script>
+<!-- chart.js는 "@4"(느슨한 최신 4.x) 대신 현재 시점의 정확한 버전(4.5.1)에 고정했습니다 —
+     SRI 해시는 파일 바이트가 1바이트만 달라져도 깨지므로, 느슨한 버전 태그와는 같이 쓸 수 없습니다.
+     향후 chart.js를 업데이트할 때는 새 버전 번호 + 새로 계산한 해시를 함께 바꿔야 합니다. -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
 <style>
   :root{
     --paper:#F9FAFB;
@@ -2203,7 +2236,7 @@ function renderRoomChips(){
       return;
     }
 
-    chip.innerHTML = r.floor + ' · ' + r.name +
+    chip.innerHTML = escHtml(r.floor) + ' · ' + escHtml(r.name) +
       '<span class="edit-icon" title="공간 이름 수정">✎</span>' +
       '<span class="x">' + (isPending ? '다시 클릭하여 삭제' : '✕') + '</span>';
     chip.querySelector('.edit-icon').onclick = function(e){
@@ -2413,7 +2446,7 @@ function renderQuote(){
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
         var codes = getOrderedCodes(room);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room" data-room-id="' + room.id + '"><td colspan="9">' + room.name + '</td></tr>';
+        var roomHtml = '<tr class="grp-room" data-room-id="' + room.id + '"><td colspan="9">' + escHtml(room.name) + '</td></tr>';
 
         if(codes.length === 0){
           roomHtml += '<tr><td colspan="9" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
@@ -2455,7 +2488,7 @@ function renderQuote(){
               '</tr>';
           });
         }
-        roomHtml += '<tr class="subtot-room"><td colspan="9">' + room.name + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
+        roomHtml += '<tr class="subtot-room"><td colspan="9">' + escHtml(room.name) + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
         floorTotal += roomTotal;
         floorHasRows = true;
         floorRoomsHtml += '<tbody class="room-group" data-room-id="' + room.id + '">' + roomHtml + '</tbody>';
@@ -2712,15 +2745,16 @@ function runPrintFlow(){
 
   var summary = buildQuoteSummary();
   document.getElementById('printToName').innerHTML =
-    (building && building !== '-' ? building : '고객') + ' <span class="suffix">귀하</span>';
+    (building && building !== '-' ? escHtml(building) : '고객') + ' <span class="suffix">귀하</span>';
 
   // 중요도 순: 1) 금액(가장 크게)  2) 견적일 · 담당자 · 연락처 (동급)  3) 견적유효기간(가장 작게)
+  // 현장명/담당자/연락처는 사용자가 직접 입력하는 값이라 innerHTML에 넣기 전 반드시 escHtml()로 이스케이프합니다.
   var factsHtml =
     '<div class="fact-amount"><span class="lbl">금액</span>' + fmt(summary.totalAmount) + '<span class="vat">(부가가치세 포함)</span></div>' +
     '<div class="fact-mid">' +
       '<span><span class="lbl">견적일</span>' + dateStr + '</span>' +
-      (managerName ? '<span><span class="lbl">담당자</span>' + managerName + '</span>' : '') +
-      (managerPhone ? '<span><span class="lbl">연락처</span>' + managerPhone + '</span>' : '') +
+      (managerName ? '<span><span class="lbl">담당자</span>' + escHtml(managerName) + '</span>' : '') +
+      (managerPhone ? '<span><span class="lbl">연락처</span>' + escHtml(managerPhone) + '</span>' : '') +
     '</div>' +
     '<div class="fact-valid"><span class="lbl">견적유효기간</span>견적일로부터 30일 (견적외 사항 별도)</div>';
   document.getElementById('printMetaLines').innerHTML = factsHtml;
@@ -3161,7 +3195,7 @@ function updateTopbarIdentity(){
   var showBadge = !!(staffAuthed && staffProfile && staffProfile.name && !whoBadgeEditMode);
   if(showBadge){
     whoAvatar.textContent = staffProfile.name.charAt(0);
-    whoText.innerHTML = '<b>' + staffProfile.name + '</b>' + (staffProfile.phone ? ' · ' + staffProfile.phone : '') + '<span class="edit" id="whoBadgeEditBtn"> 변경</span>';
+    whoText.innerHTML = '<b>' + escHtml(staffProfile.name) + '</b>' + (staffProfile.phone ? ' · ' + escHtml(staffProfile.phone) : '') + '<span class="edit" id="whoBadgeEditBtn"> 변경</span>';
     whoBadge.style.display = 'flex';
     managerFields.style.display = 'none';
     var editBtn = document.getElementById('whoBadgeEditBtn');
@@ -3281,7 +3315,7 @@ function staffApprovedHtml(){
   var roleLabel = ROLE_LABELS[staffProfile.role] || staffProfile.role;
   var canDash = hasPermission('dashboard_home');
   return '<h3>직원 로그인</h3>' +
-    '<p style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:var(--ink-3);margin:-8px 0 12px;">' + staffProfile.name + '님 (' + roleLabel + ') · <a href="#" id="staffLogout" style="color:var(--rust);">로그아웃</a></p>' +
+    '<p style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px;color:var(--ink-3);margin:-8px 0 12px;">' + escHtml(staffProfile.name) + '님 (' + escHtml(roleLabel) + ') · <a href="#" id="staffLogout" style="color:var(--rust);">로그아웃</a></p>' +
     (canDash ? '<button class="admin-btn wide" id="staffOpenDashboardBtn" style="background:var(--teal);">📊 대시보드 열기</button>' :
       '<p style="font-family:\'IBM Plex Mono\',monospace;font-size:11px;color:var(--ink-3);">견적서 화면(작업 화면)에서 품목의 단가를 직접 수정할 수 있습니다.</p>');
 }
@@ -3740,7 +3774,7 @@ function renderAdminDashboardHomeContent(events){
   var spaceHtml = spaceRows.length ? spaceRows.map(function(r){
     var pct = Math.round((r.count / spaceMax) * 1000) / 10;
     return '<div class="dash-bar-row">' +
-      '<div class="top"><span>' + r.name + '</span><span>' + r.count.toLocaleString('ko-KR') + '건</span></div>' +
+      '<div class="top"><span>' + escHtml(r.name) + '</span><span>' + r.count.toLocaleString('ko-KR') + '건</span></div>' +
       '<div class="dash-bar-track"><div class="dash-bar-fill" style="width:' + pct + '%;background:var(--teal);"></div></div>' +
     '</div>';
   }).join('') : '<div class="dash-placeholder">' + unitLabel + ' 공간별 견적 데이터가 아직 없습니다</div>';
@@ -3866,7 +3900,7 @@ function renderStaffManageTab(){
     });
     var pendingHtml = pending.length ? pending.map(function(u){
       return '<div class="admin-stat-row" style="flex-direction:column;align-items:stretch;gap:6px;">' +
-        '<div><b>' + u.name + '</b> · ' + u.email + ' · ' + (u.phone || '') + '</div>' +
+        '<div><b>' + escHtml(u.name) + '</b> · ' + escHtml(u.email) + ' · ' + escHtml(u.phone || '') + '</div>' +
         '<div style="display:flex;gap:6px;">' +
           '<button class="admin-btn" data-approve="manager" data-uid="' + u._id + '" style="background:var(--teal);flex:1;">관리매니저로 승인</button>' +
           '<button class="admin-btn" data-approve="sales" data-uid="' + u._id + '" style="background:var(--teal);flex:1;">영업자로 승인</button>' +
@@ -3876,7 +3910,7 @@ function renderStaffManageTab(){
     var approvedHtml = approved.length ? approved.map(function(u){
       var otherRole = u.role === 'manager' ? 'sales' : 'manager';
       return '<div class="admin-stat-row" style="flex-wrap:wrap;gap:6px;">' +
-        '<span>' + u.name + ' · ' + u.email + ' · ' + (ROLE_LABELS[u.role] || u.role) + '</span>' +
+        '<span>' + escHtml(u.name) + ' · ' + escHtml(u.email) + ' · ' + escHtml(ROLE_LABELS[u.role] || u.role) + '</span>' +
         '<span style="display:flex;gap:6px;">' +
           '<button class="admin-btn" data-role-change="' + otherRole + '" data-uid="' + u._id + '" style="background:var(--teal-dark);">' + ROLE_LABELS[otherRole] + '로 조정</button>' +
           '<button class="admin-btn" data-block="1" data-uid="' + u._id + '" style="background:var(--rust);">차단</button>' +
