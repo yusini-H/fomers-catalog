@@ -208,6 +208,32 @@
   .room-chip[draggable]{ cursor:grab; }
   .room-chip.reorder-before{ box-shadow:-3px 0 0 0 #007bff inset; }
   .room-chip.reorder-after{ box-shadow:3px 0 0 0 #007bff inset; }
+  .room-chip .edit-icon{
+    width:18px;height:18px;border-radius:50%;
+    background:var(--paper-dim);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:#9CA3AF;cursor:pointer;
+  }
+  .room-chip .edit-icon:hover{background:var(--teal-light);color:var(--teal-dark);}
+  .room-chip.active .edit-icon{background:#fff;color:var(--teal-dark);}
+  .room-chip.editing{
+    cursor:default;padding:5px 6px;background:var(--teal-light);border-color:var(--teal);
+  }
+  .chip-edit-input{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    border:1px solid var(--teal);border-radius:6px;padding:4px 6px;
+    box-sizing:border-box;background:#fff;color:var(--ink-2);
+  }
+  .chip-edit-floor{ width:52px; }
+  .chip-edit-name{ width:78px; }
+  .chip-edit-save,.chip-edit-cancel{
+    width:22px;height:22px;border-radius:50%;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none;
+  }
+  .chip-edit-save{background:var(--teal);color:#fff;}
+  .chip-edit-save:hover{background:var(--teal-dark);}
+  .chip-edit-cancel{background:var(--paper-dim);color:var(--ink-3);}
+  .chip-edit-cancel:hover{background:#E5E7EB;}
   .add-room-form{
     display:flex;
     gap:6px;
@@ -1660,6 +1686,16 @@ function reorderRoom(draggedRoomId, targetRoomId, insertAfter){
   state.rooms.splice(toIdx, 0, moved);
   render();
 }
+function saveRoomEdit(id, newFloor, newName){
+  var room = findRoom(id);
+  if(!room) return;
+  var f = newFloor.trim(), n = newName.trim();
+  if(!f || !n){ showToast('층과 실명을 모두 입력해주세요'); return; }
+  room.floor = f;
+  room.name = n;
+  editingRoomId = null;
+  render();
+}
 // 영업자/관리매니저/관리자가 견적 화면에서 단가를 임시로 조정할 수 있게 하는 방(room) 단위 오버라이드.
 // specOverrides와 동일한 패턴 — PRODUCTS 원본 단가는 건드리지 않고, 이 견적 세션에서만 유효합니다.
 function effectivePrice(room, code, p){
@@ -1950,6 +1986,7 @@ function renderGrid(){
 
 var pendingRemoveRoomId = null;
 var pendingRemoveTimer = null;
+var editingRoomId = null; // ✎ 아이콘으로 층/실명을 수정 중인 공간의 id
 
 // 5. 품목 복사 기능 — 체크박스로 선택된 (공간ID||코드) 목록.
 //    PC는 드래그앤드롭으로 즉시 복사할 수 있고, 모든 기기에서 하단 바의
@@ -2105,8 +2142,41 @@ function renderRoomChips(){
   state.rooms.forEach(function(r){
     var chip = document.createElement('div');
     var isPending = pendingRemoveRoomId === r.id;
-    chip.className = 'room-chip' + (r.id === state.activeRoomId ? ' active' : '') + (isPending ? ' pending-remove' : '');
-    chip.innerHTML = r.floor + ' · ' + r.name + '<span class="x">' + (isPending ? '다시 클릭하여 삭제' : '✕') + '</span>';
+    var isEditing = editingRoomId === r.id;
+    chip.className = 'room-chip' + (r.id === state.activeRoomId ? ' active' : '') + (isPending ? ' pending-remove' : '') + (isEditing ? ' editing' : '');
+
+    if(isEditing){
+      chip.innerHTML =
+        '<input type="text" class="chip-edit-input chip-edit-floor mono" value="' + r.floor.replace(/"/g,'&quot;') + '" placeholder="층">' +
+        '<input type="text" class="chip-edit-input chip-edit-name mono" value="' + r.name.replace(/"/g,'&quot;') + '" placeholder="실명">' +
+        '<button type="button" class="chip-edit-save" title="저장">✓</button>' +
+        '<button type="button" class="chip-edit-cancel" title="취소">✕</button>';
+      var floorInp = chip.querySelector('.chip-edit-floor');
+      var nameInp = chip.querySelector('.chip-edit-name');
+      function commitEdit(){ saveRoomEdit(r.id, floorInp.value, nameInp.value); }
+      function cancelEdit(){ editingRoomId = null; renderRoomChips(); }
+      chip.querySelector('.chip-edit-save').onclick = function(e){ e.stopPropagation(); commitEdit(); };
+      chip.querySelector('.chip-edit-cancel').onclick = function(e){ e.stopPropagation(); cancelEdit(); };
+      [floorInp, nameInp].forEach(function(inp){
+        inp.addEventListener('click', function(e){ e.stopPropagation(); });
+        inp.addEventListener('keydown', function(e){
+          if(e.key === 'Enter') commitEdit();
+          if(e.key === 'Escape') cancelEdit();
+        });
+      });
+      chip.onclick = function(e){ e.stopPropagation(); };
+      wrap.appendChild(chip);
+      return;
+    }
+
+    chip.innerHTML = r.floor + ' · ' + r.name +
+      '<span class="edit-icon" title="공간 이름 수정">✎</span>' +
+      '<span class="x">' + (isPending ? '다시 클릭하여 삭제' : '✕') + '</span>';
+    chip.querySelector('.edit-icon').onclick = function(e){
+      e.stopPropagation();
+      editingRoomId = r.id;
+      renderRoomChips();
+    };
     chip.querySelector('.x').onclick = function(e){
       e.stopPropagation();
       requestRemoveRoom(r.id);
