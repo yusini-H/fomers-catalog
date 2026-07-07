@@ -159,7 +159,10 @@
     outline:none;
   }
   .spacebar .field input[type=text]:focus{border-color:var(--teal);background:#fff;}
-  .spacebar .field.site{flex:1;min-width:220px;}
+  /* 예전엔 flex:1이라 남는 공간을 전부 차지해 다른 버튼(불러오기/내보내기 등)이 들어갈
+     자리가 좁아졌습니다 — 요청에 따라 칸을 줄여(고정 폭에 가깝게) 다른 버튼들이 한 줄에
+     넉넉히 들어가도록 했습니다. */
+  .spacebar .field.site{flex:0 1 220px;min-width:150px;}
   .spacebar .field.site input{width:100%;font-size:12.5px;font-weight:600;}
   .spacebar .field.mgr input{width:105px;}
   .spacebar .field.phone input{width:130px;}
@@ -330,7 +333,10 @@
   }
 
   .layout{
-    max-width:1720px;
+    /* 예전엔 1720px였는데, 넓은 모니터에서 카탈로그(브라우즈) 모드일 때 좌우로 빈
+       여백이 많이 남는다는 지적이 있어 견적서 모드와 동일한 폭(1960px)까지 넓혔습니다
+       — 왼쪽 제품 그리드가 flex:1이라 늘어난 폭만큼 자동으로 넓게 채워집니다. */
+    max-width:1960px;
     margin:0 auto;
     padding:24px 24px 90px;
     display:flex;
@@ -354,7 +360,10 @@
     min-width:0;
   }
   .layout-right{
-    width:480px;
+    /* 예전엔 480px였는데, 카탈로그 모드에서 공간별 견적서 칸이 너무 좁다는 요청에 따라
+       넓혔습니다(견적서 모드의 .layout-right는 이 값과 무관하게 별도 규칙으로 항상
+       덮어써지므로 여기서 넓혀도 견적서 모드 레이아웃에는 영향이 없습니다). */
+    width:600px;
     flex:none;
     position:sticky;
     top:calc(var(--spacebar-h) + 20px);
@@ -454,6 +463,8 @@
   .qm-room-tab .qm-room-tab-edit, .qm-room-tab .qm-room-tab-x{ opacity:.6;font-size:11px; }
   .qm-room-tab:hover .qm-room-tab-edit, .qm-room-tab:hover .qm-room-tab-x{ opacity:1; }
   .qm-room-tab.pending-remove{ border-color:var(--rust);color:var(--rust-dark); }
+  .qm-room-tab.reorder-before{ box-shadow:-3px 0 0 0 #007bff inset; }
+  .qm-room-tab.reorder-after{ box-shadow:3px 0 0 0 #007bff inset; }
   .qm-room-tab.editing{
     background:#fff;padding:6px 8px;gap:4px;
   }
@@ -585,8 +596,9 @@
   .qm-help-box li{font-size:11px;color:var(--ink-3);line-height:1.6;}
 
   /* 공간 수/총 수량/총 합계 — 예전엔 표 위(.quote-head)에 있었지만 화면 아래쪽으로
-     옮겨졌습니다. 공급가액/부가세/합계 요약 박스는 제거되어 이 줄에는 통계만 남습니다. */
-  .qm-bottom-row{ display:flex; gap:14px; align-items:stretch; margin-top:12px; justify-content:flex-end; }
+     옮겨졌습니다. 공급가액/부가세/합계 요약 박스는 제거되어 이 줄에는 통계만 남습니다.
+     요청에 따라 오른쪽 정렬 대신 왼쪽 정렬로 바꿨습니다. */
+  .qm-bottom-row{ display:flex; gap:14px; align-items:stretch; margin-top:12px; justify-content:flex-start; }
 
   /* 공간(방)별 G2B 번호 빠른 추가 — 표의 각 공간 헤더 행 안, "층 / 실명" 표시 오른쪽에 붙는
      작은 입력창. 특정 "선택된 공간" 개념 없이, 원하는 공간의 행에서 바로 번호를 입력하면
@@ -905,15 +917,17 @@
     letter-spacing:.5px;margin:0;
   }
   .quote-stats{display:flex;gap:10px;flex-wrap:wrap;}
+  /* 요청에 따라 공간수/총수량/총합계 박스를 더 작고 통일된 크기(11px)로 줄였습니다
+     (예전엔 18px/23px로 서로 크기가 달랐습니다). */
   .stat{
-    background:#F3F4F6;color:#1F2937;padding:12px 18px;
-    font-family:'Pretendard','IBM Plex Mono',monospace;border-radius:12px;min-width:88px;
+    background:#F3F4F6;color:#1F2937;padding:8px 14px;
+    font-family:'Pretendard','IBM Plex Mono',monospace;border-radius:10px;min-width:72px;
     border:none;box-shadow:0 1px 3px rgba(17,24,39,.06);
   }
-  .stat b{display:block;font-size:18px;font-weight:700;color:#1F2937;}
-  .stat span{font-size:10.5px;color:#6B7280;}
+  .stat b{display:block;font-size:11px;font-weight:700;color:#1F2937;}
+  .stat span{font-size:9.5px;color:#6B7280;}
   .stat-em{background:#EAF2FE;box-shadow:0 2px 8px rgba(45,143,204,.18);}
-  .stat-em b{color:#1B6699;font-size:23px;}
+  .stat-em b{color:#1B6699;font-size:11px;}
   .stat-em span{color:#1B6699;}
 
   #quoteWrap{overflow-x:auto;}
@@ -924,14 +938,16 @@
     .layout-right table.qtable thead{ display:none; }
 
     /* 담긴 품목 행: 좁은 사이드바에서도 품목/규격/수량/금액이 한눈에 보이도록
-       표 형태 대신 카드형(그리드) 레이아웃으로 표시합니다. */
+       표 형태 대신 카드형(그리드) 레이아웃으로 표시합니다. 비고(재질 메모)는 카탈로그
+       모드에서는 굳이 필요 없다는 요청에 따라 이 카드형 뷰에서는 아예 숨기고, 그
+       자리 대신 증감율(%)을 수량/단가/총금액과 나란히 보여줍니다. */
     .layout-right table.qtable tbody tr[data-room-id][data-code]{
       display:grid;
-      grid-template-columns:28px 92px 1fr 50px 78px auto;
+      grid-template-columns:28px 92px 1fr 50px 66px 44px auto;
       grid-template-areas:
-        "thumb code name  name  name  remove"
-        "spec  spec spec  spec  spec  spec"
-        ".     .    .     qty   price total";
+        "thumb code name  name  name  name  remove"
+        "spec  spec spec  spec  spec  spec  spec"
+        ".     .    .     qty   price pct   total";
       column-gap:8px;
       row-gap:6px;
       align-items:center;
@@ -956,6 +972,11 @@
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-spec{ grid-area:spec;display:flex;flex-direction:column;gap:3px; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-qty{ grid-area:qty;display:flex;flex-direction:column;gap:3px; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price{ grid-area:price;display:flex;flex-direction:column;gap:2px; }
+    .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-discpct{
+      grid-area:pct;display:flex;flex-direction:column;gap:2px;align-items:center;
+    }
+    .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-discpct .discpct-input{ width:100%; }
+    .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-remark{ display:none; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-total{ grid-area:total;display:flex;flex-direction:column;gap:2px;align-items:flex-end; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-qty .qty-input{ width:100%; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price .price-input{ width:100%; }
@@ -1455,7 +1476,7 @@
     /* 인쇄 시 제품 이미지가 너무 작게 나오는 문제 → 인쇄 전용으로 큼직하게 확대.
        정사각형 유지 · object-fit:contain(JS에서 지정, 비율 유지·왜곡 금지) · 최대 70px 규칙
        안에서 64px로 키우고, 옅은 테두리를 둘러 문서 완성도를 높입니다. */
-    .row-thumb{ width:64px;height:64px;border-radius:6px;border:1px solid #E5E7EB; }
+    .row-thumb{ width:64px;height:64px;border-radius:6px;border:1px solid #E5E7EB;display:inline-flex; }
     .row-thumb svg{ width:26px;height:26px; }
 
     /* 현장명 귀하 — 인쇄 헤더 바로 아래, 두 칼럼(금액 등 · 공급자정보) 위에 위치 */
@@ -1590,8 +1611,9 @@
     }
     table.qtable thead th{
       font-family:'Pretendard','IBM Plex Sans KR',sans-serif;
-      font-size:12pt; font-weight:700;
+      font-size:12pt; font-weight:700; text-align:center;
       padding-top:8px; padding-bottom:8px; padding-left:6px; padding-right:6px;
+      overflow:hidden; /* 본문 셀과 동일하게, 헤더 글자도 옆 칸을 침범하지 않도록 안전장치를 둡니다 */
     }
     /* 행 높이는 어떤 고정값도 주지 않습니다 — table-layout:fixed는 "열 너비"만 고정할 뿐
        행 높이는 여전히 브라우저 표 레이아웃 엔진이 그 행의 각 셀(이미지 64px, 줄바꿈된
@@ -1604,12 +1626,13 @@
     .subtot-room td, .subtot-floor td{ font-size:12pt !important; font-weight:700 !important; }
     tr.grand-total td{ font-size:13pt !important; font-weight:800 !important; text-align:right !important; }
 
-    /* 숫자 정렬 규칙 — 수량 가운데 · 단가 우측 · 금액 우측 · G2B 가운데 */
+    /* 숫자 정렬 규칙 — 요청에 따라 이미지/품목/규격/수량/단가/총금액/G2B/비고 모두
+       가운데 정렬로 통일합니다. */
     .row-qty{ text-align:center !important; }
     .qty-input{ text-align:center !important; }
-    .row-price{ text-align:right !important; padding-left:8px !important; overflow:hidden; }
-    .price-input{ text-align:right !important; }
-    .row-total{ text-align:right !important; padding-left:9px !important; overflow:hidden; }
+    .row-price{ text-align:center !important; padding-left:8px !important; overflow:hidden; }
+    .price-input{ text-align:center !important; }
+    .row-total{ text-align:center !important; padding-left:9px !important; overflow:hidden; }
     /* 단가/총금액 글자 자체도 다른 칸과 동일한 8pt로 명시적으로 강제합니다 — 이 클래스들은
        인쇄 스코프 밖(화면용 기본 CSS)에도 더 큰 font-size 규칙이 있어, 만약 그쪽이 더 높은
        우선순위로 적용되면 옆 칸(G2B)을 침범하는 원인이 될 수 있으므로 여기서 확실히 못박습니다. */
@@ -1634,14 +1657,14 @@
     }
     /* 품목명 — 자동 줄바꿈(단어/공백 경계 우선, 그래도 안 되면 강제 줄바꿈으로 넘침 방지).
        코드/규격/G2B 등 다른 칸과 동일하게 8pt로 통일합니다. */
-    .row-name{ overflow-wrap:break-word; word-break:keep-all; white-space:normal; font-size:8pt; }
+    .row-name{ overflow-wrap:anywhere; word-break:keep-all; white-space:normal; font-size:8pt; text-align:center; }
     /* 규격은 화면에서 쓰던 input을 인쇄에서는 숨기고, 줄바꿈 가능한 텍스트로 바꿔 보여줍니다
        (input의 value 텍스트는 CSS로 줄바꿈시킬 수 없어 길면 그대로 잘려 보였습니다).
        "6000×400×2200mm"가 "2200m / m"처럼 숫자+단위 중간에서 갈라지던 문제는 CSS
        word-break만으로는 "어디서" 끊을지 제어할 수 없어 근본적으로 못 고칩니다 —
        그래서 JS(wrapSpecForPrint)가 ×, x, /, -, 공백 등 자연스러운 구분자 바로 뒤에
        <wbr>(줄바꿈 후보 지점)을 미리 심어, 그 지점을 우선 사용하도록 유도합니다. */
-    .row-spec{ overflow-wrap:break-word; word-break:keep-all; white-space:normal; }
+    .row-spec{ overflow-wrap:anywhere; word-break:keep-all; white-space:normal; text-align:center; }
     .row-spec .spec-input{ display:none; }
     .row-spec .spec-print-text{
       display:block; font-family:'IBM Plex Mono',monospace; font-size:8pt;
@@ -1651,7 +1674,7 @@
     /* 인쇄용으로 확대한 64px 썸네일이 좁은 칸 밖으로 튀어나와 옆 칸(코드/규격) 글씨와
        겹쳐 보이던 문제 — 칸 자체 너비를 썸네일보다 넉넉히 넓히고, 혹시 남는 오차는
        overflow:hidden으로 잘라 다른 칸을 침범하지 않도록 막습니다. */
-    .row-thumb-cell{ overflow:hidden; }
+    .row-thumb-cell{ overflow:hidden; text-align:center; }
     /* 증감율(%) 입력칸은 내부 조정용이라 정식 견적서(PDF)에는 노출하지 않습니다. 발주서
        (body.doctype-po)에서도 마찬가지로 증감율은 절대 노출하지 않습니다 — 위 .row-discpct
        규칙에 body.doctype-po 예외를 두지 않는 것 자체가 그 요구사항의 구현입니다. */
@@ -1673,13 +1696,22 @@
     body.doctype-po .row-remark{
       display:table-cell !important; padding-top:8px !important; padding-bottom:8px !important;
       padding-left:6px !important; padding-right:6px !important; width:auto !important;
-      text-align:left; font-size:9.5pt; line-height:1.55; vertical-align:top;
+      /* 요청에 따라 가운데 정렬로 통일합니다. */
+      text-align:center; font-size:9.5pt; line-height:1.55; vertical-align:top;
+      overflow:hidden; /* 아래 remark-print-text가 어떤 경우에도 옆 칸(G2B)을 침범하지 못하도록 하는 안전장치 */
     }
     body.doctype-po .col-remark{ display:table-cell !important; }
     body.doctype-po .row-remark .remark-input{ display:none; }
     body.doctype-po .row-remark .remark-print-text{
       display:block; font-family:'Pretendard','IBM Plex Sans KR',sans-serif;
-      color:var(--ink-2); overflow-wrap:break-word; word-break:keep-all; white-space:normal;
+      color:var(--ink-2); white-space:normal; max-width:100%;
+      /* [비고↔G2B 겹침 버그 수정] 예전엔 overflow-wrap:break-word + word-break:keep-all
+         조합을 썼는데, 공백이 전혀 없는 긴 문자열(예: 오타로 이어붙여 입력한 메모)은
+         이 조합에서 줄바꿈이 전혀 안 되고 옆 칸(G2B) 위로 그대로 넘쳐 겹치는 문제가
+         있었습니다. overflow-wrap:anywhere는 자연스러운 줄바꿈 지점이 없어도 반드시
+         셀 안에서 강제로 줄을 바꾸므로, 어떤 입력값이 와도 절대 넘치지 않습니다.
+         (word-break:keep-all은 유지해 한글 단어는 여전히 자연스럽게 우선 줄바꿈됩니다.) */
+      overflow-wrap:anywhere; word-break:keep-all;
     }
   }
 
@@ -1812,6 +1844,14 @@
       <div class="draft-stage-group no-print" id="docTypeGroup">
         <button type="button" class="draft-stage-btn active" data-doctype="quote">견적서</button>
         <button type="button" class="draft-stage-btn" data-doctype="po">발주서</button>
+      </div>
+      <!-- 내보내기(현재 작업 내용을 JSON 파일로 저장) / 불러오기(그 파일을 다시 열어 바로
+           수정 가능한 상태로 복원) — 공간/품목/현장명/담당자/연락처/최초안·수정안·최종안/
+           견적서·발주서까지 전부 하나의 파일에 담습니다. -->
+      <div class="draft-stage-group no-print" id="importExportGroup">
+        <input type="file" id="draftImportInput" accept="application/json,.json" style="display:none;">
+        <button type="button" class="draft-stage-btn" id="draftImportBtn" title="저장했던 파일을 불러와 바로 이어서 수정합니다">불러오기</button>
+        <button type="button" class="draft-stage-btn" id="draftExportBtn" title="현재 작업 내용을 파일로 저장합니다">내보내기</button>
       </div>
       <button class="print-btn print-btn-top no-print" id="printBtnTop" type="button">인쇄 / PDF 저장</button>
     </div>
@@ -2232,67 +2272,131 @@ var roomSeq = 3;
 // ── 새로고침해도 작업 중이던 공간·품목이 사라지지 않도록 임시 자동저장(localStorage) ──
 // (Firestore에 정식으로 기록되는 것은 인쇄/PDF 시점의 완성된 견적(logQuoteEvent)뿐이므로,
 //  이 자동저장은 어디까지나 "새로고침 방지용 임시 보관"이며 다른 기기/브라우저와는 공유되지 않습니다.)
+// 이 payload 구조는 "내보내기(파일로 저장)/불러오기(파일에서 복원)" 기능과도 완전히 동일하게
+// 공유됩니다 — buildDraftPayload()/applyDraftPayload()로 분리해, localStorage 자동저장이든
+// 파일로 내보내고 불러오는 것이든 항상 같은 하나의 스키마·복원 로직을 쓰도록 했습니다
+// (두 곳에서 로직이 어긋나는 것을 방지 — 이 코드베이스에서 반복적으로 쓰는 원칙입니다).
 var DRAFT_STATE_KEY = 'fomers_draft_state_v1';
+function buildDraftPayload(){
+  var buildingEl = document.getElementById('buildingInput');
+  var mgrNameEl = document.getElementById('managerNameInput');
+  var mgrPhoneEl = document.getElementById('managerPhoneInput');
+  return {
+    rooms: state.rooms,
+    activeRoomId: state.activeRoomId,
+    roomSeq: roomSeq,
+    building: buildingEl ? buildingEl.value : '',
+    managerName: mgrNameEl ? mgrNameEl.value : '',
+    managerPhone: mgrPhoneEl ? mgrPhoneEl.value : '',
+    draftStage: (typeof quoteDraftStage !== 'undefined') ? quoteDraftStage : undefined,
+    docType: (typeof quoteDocType !== 'undefined') ? quoteDocType : undefined,
+    viewMode: (typeof quoteViewMode !== 'undefined') ? quoteViewMode : undefined,
+    memo: (function(){ var el = document.getElementById('quoteMemoInput'); return el ? el.value : ''; })()
+  };
+}
 function saveDraftState(){
   try{
-    var buildingEl = document.getElementById('buildingInput');
-    var mgrNameEl = document.getElementById('managerNameInput');
-    var mgrPhoneEl = document.getElementById('managerPhoneInput');
-    var payload = {
-      rooms: state.rooms,
-      activeRoomId: state.activeRoomId,
-      roomSeq: roomSeq,
-      building: buildingEl ? buildingEl.value : '',
-      managerName: mgrNameEl ? mgrNameEl.value : '',
-      managerPhone: mgrPhoneEl ? mgrPhoneEl.value : '',
-      draftStage: (typeof quoteDraftStage !== 'undefined') ? quoteDraftStage : undefined,
-      docType: (typeof quoteDocType !== 'undefined') ? quoteDocType : undefined,
-      viewMode: (typeof quoteViewMode !== 'undefined') ? quoteViewMode : undefined,
-      memo: (function(){ var el = document.getElementById('quoteMemoInput'); return el ? el.value : ''; })()
-    };
-    localStorage.setItem(DRAFT_STATE_KEY, JSON.stringify(payload));
+    localStorage.setItem(DRAFT_STATE_KEY, JSON.stringify(buildDraftPayload()));
   } catch(e){}
+}
+// saved(payload)를 실제 상태(state.rooms 등)와 화면에 적용합니다. localStorage 자동복원과
+// 파일 불러오기가 공통으로 사용합니다. 반환값: 성공적으로 적용했으면 true.
+function applyDraftPayload(saved){
+  if(!saved || !Array.isArray(saved.rooms) || !saved.rooms.length) return false;
+  state.rooms = saved.rooms;
+  state.activeRoomId = saved.activeRoomId && saved.rooms.some(function(r){ return r.id === saved.activeRoomId; }) ?
+    saved.activeRoomId : saved.rooms[0].id;
+  if(typeof saved.roomSeq === 'number' && saved.roomSeq > roomSeq) roomSeq = saved.roomSeq;
+  if(saved.draftStage) quoteDraftStage = saved.draftStage;
+  var buildingEl = document.getElementById('buildingInput');
+  var mgrNameEl = document.getElementById('managerNameInput');
+  var mgrPhoneEl = document.getElementById('managerPhoneInput');
+  // 불러오기(파일에서)는 값이 비어있는 필드(예: 담당자를 지우고 저장한 파일)도 정확히 그대로
+  // 반영해야 하므로 saved.xxx가 "존재하는 키인지"(!== undefined)로 확인합니다 — 자동복원에서
+  // 쓰던 "값이 있을 때만"(truthy) 조건은 빈 문자열로 저장된 값을 무시해버리는 문제가 있습니다.
+  if(buildingEl && saved.building !== undefined) buildingEl.value = saved.building;
+  if(mgrNameEl && saved.managerName !== undefined) mgrNameEl.value = saved.managerName;
+  if(mgrPhoneEl && saved.managerPhone !== undefined) mgrPhoneEl.value = saved.managerPhone;
+  if(saved.draftStage){
+    Array.prototype.forEach.call(document.querySelectorAll('#draftStageGroup .draft-stage-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-stage') === saved.draftStage);
+    });
+  }
+  if(saved.docType){
+    quoteDocType = saved.docType;
+    Array.prototype.forEach.call(document.querySelectorAll('#docTypeGroup .draft-stage-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-doctype') === saved.docType);
+    });
+  }
+  if(saved.viewMode && typeof quoteViewMode !== 'undefined'){
+    quoteViewMode = saved.viewMode;
+    Array.prototype.forEach.call(document.querySelectorAll('#viewModeGroup .draft-stage-btn'), function(b){
+      b.classList.toggle('active', b.getAttribute('data-viewmode') === saved.viewMode);
+    });
+    if(typeof applyViewMode === 'function') applyViewMode();
+  }
+  if(typeof saved.memo === 'string'){
+    var memoEl = document.getElementById('quoteMemoInput');
+    if(memoEl) memoEl.value = saved.memo;
+  }
+  return true;
 }
 function restoreDraftState(){
   try{
     var raw = localStorage.getItem(DRAFT_STATE_KEY);
     if(!raw) return;
-    var saved = JSON.parse(raw);
-    if(!saved || !Array.isArray(saved.rooms) || !saved.rooms.length) return;
-    state.rooms = saved.rooms;
-    state.activeRoomId = saved.activeRoomId && saved.rooms.some(function(r){ return r.id === saved.activeRoomId; }) ?
-      saved.activeRoomId : saved.rooms[0].id;
-    if(typeof saved.roomSeq === 'number' && saved.roomSeq > roomSeq) roomSeq = saved.roomSeq;
-    if(saved.draftStage) quoteDraftStage = saved.draftStage;
-    var buildingEl = document.getElementById('buildingInput');
-    var mgrNameEl = document.getElementById('managerNameInput');
-    var mgrPhoneEl = document.getElementById('managerPhoneInput');
-    if(buildingEl && saved.building) buildingEl.value = saved.building;
-    if(mgrNameEl && saved.managerName) mgrNameEl.value = saved.managerName;
-    if(mgrPhoneEl && saved.managerPhone) mgrPhoneEl.value = saved.managerPhone;
-    if(saved.draftStage){
-      Array.prototype.forEach.call(document.querySelectorAll('#draftStageGroup .draft-stage-btn'), function(b){
-        b.classList.toggle('active', b.getAttribute('data-stage') === saved.draftStage);
-      });
-    }
-    if(saved.docType){
-      quoteDocType = saved.docType;
-      Array.prototype.forEach.call(document.querySelectorAll('#docTypeGroup .draft-stage-btn'), function(b){
-        b.classList.toggle('active', b.getAttribute('data-doctype') === saved.docType);
-      });
-    }
-    if(saved.viewMode && typeof quoteViewMode !== 'undefined'){
-      quoteViewMode = saved.viewMode;
-      Array.prototype.forEach.call(document.querySelectorAll('#viewModeGroup .draft-stage-btn'), function(b){
-        b.classList.toggle('active', b.getAttribute('data-viewmode') === saved.viewMode);
-      });
-      if(typeof applyViewMode === 'function') applyViewMode();
-    }
-    if(typeof saved.memo === 'string'){
-      var memoEl = document.getElementById('quoteMemoInput');
-      if(memoEl) memoEl.value = saved.memo;
-    }
+    applyDraftPayload(JSON.parse(raw));
   } catch(e){}
+}
+
+// ── 내보내기(파일로 저장) / 불러오기(파일에서 복원) ──────────────────────
+// 요청에 따라 파일명은 "날짜_현장명_저장파일.json" 형식입니다(인쇄 시 파일명 규칙과
+// 동일한 날짜 포맷·현장명 새니타이즈 방식을 재사용해 두 곳이 어긋나지 않게 했습니다).
+function exportDraftToFile(){
+  var today = new Date();
+  var dateStrCompact = today.getFullYear() + String(today.getMonth()+1).padStart(2,'0') + String(today.getDate()).padStart(2,'0');
+  var buildingEl = document.getElementById('buildingInput');
+  var building = buildingEl && buildingEl.value.trim() ? buildingEl.value.trim() : '현장명미정';
+  var fileBuilding = building.replace(/[\\\/:*?"<>|]/g, '_');
+  var filename = dateStrCompact + '_' + fileBuilding + '_저장파일.json';
+  var payload = buildDraftPayload();
+  var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  showToast('내보내기 완료: ' + filename);
+}
+function importDraftFromFile(file){
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var parsed;
+    try{
+      parsed = JSON.parse(reader.result);
+    } catch(e){
+      showToast('불러오기 실패 · 올바른 저장 파일이 아닙니다');
+      return;
+    }
+    var ok = applyDraftPayload(parsed);
+    if(!ok){
+      showToast('불러오기 실패 · 공간 정보가 없는 파일입니다');
+      return;
+    }
+    // 불러온 즉시 바로 수정 가능해야 하므로 화면 전체를 다시 그리고, 그 상태를 자동저장에도
+    // 반영해 새로고침해도 불러온 내용이 그대로 유지되도록 합니다.
+    render();
+    saveDraftState();
+    showToast('불러오기 완료 · 바로 수정하실 수 있습니다');
+  };
+  reader.onerror = function(){
+    showToast('불러오기 실패 · 파일을 읽을 수 없습니다');
+  };
+  reader.readAsText(file);
 }
 
 function fmt(n){ return n.toLocaleString('ko-KR') + '원'; }
@@ -2954,6 +3058,38 @@ function renderQmRoomTabs(){
       requestRemoveRoom(r.id);
     };
     tab.onclick = function(){ state.activeRoomId = r.id; render(); };
+    // 탭 자체를 드래그하면 공간(방) 순서를 바꿉니다 — 카탈로그 모드의 #roomChips
+    // 칩과 완전히 동일한 reorderRoom()/draggingChipRoomId를 그대로 재사용하므로,
+    // 어느 쪽(칩 또는 이 탭)에서 순서를 바꾸든 항상 같은 state.rooms 순서로 반영됩니다.
+    if(POINTER_FINE){
+      tab.setAttribute('draggable', 'true');
+      tab.addEventListener('dragstart', function(e){
+        draggingChipRoomId = r.id;
+        e.dataTransfer.effectAllowed = 'move';
+        try{ e.dataTransfer.setData('text/plain', 'fomers-room-reorder'); }catch(err){}
+      });
+      tab.addEventListener('dragend', function(){ draggingChipRoomId = null; });
+      tab.addEventListener('dragover', function(e){
+        if(!draggingChipRoomId || draggingChipRoomId === r.id) return;
+        e.preventDefault();
+        var rect = tab.getBoundingClientRect();
+        var isAfter = (e.clientX - rect.left) > rect.width / 2;
+        tab.classList.toggle('reorder-after', isAfter);
+        tab.classList.toggle('reorder-before', !isAfter);
+      });
+      tab.addEventListener('dragleave', function(){
+        tab.classList.remove('reorder-before', 'reorder-after');
+      });
+      tab.addEventListener('drop', function(e){
+        if(!draggingChipRoomId) return;
+        e.preventDefault();
+        var rect = tab.getBoundingClientRect();
+        var isAfter = (e.clientX - rect.left) > rect.width / 2;
+        tab.classList.remove('reorder-before', 'reorder-after');
+        reorderRoom(draggingChipRoomId, r.id, isAfter);
+        draggingChipRoomId = null;
+      });
+    }
     wrap.appendChild(tab);
   });
 
@@ -3563,6 +3699,21 @@ Array.prototype.forEach.call(document.querySelectorAll('#docTypeGroup .draft-sta
   });
 });
 
+// 내보내기(파일로 저장)/불러오기(파일에서 복원) 버튼 연결.
+var draftExportBtnEl = document.getElementById('draftExportBtn');
+if(draftExportBtnEl) draftExportBtnEl.addEventListener('click', exportDraftToFile);
+var draftImportBtnEl = document.getElementById('draftImportBtn');
+var draftImportInputEl = document.getElementById('draftImportInput');
+if(draftImportBtnEl && draftImportInputEl){
+  draftImportBtnEl.addEventListener('click', function(){ draftImportInputEl.click(); });
+  draftImportInputEl.addEventListener('change', function(){
+    var file = draftImportInputEl.files && draftImportInputEl.files[0];
+    if(file) importDraftFromFile(file);
+    // 같은 파일을 다시 선택해도 change 이벤트가 또 발생하도록 값 초기화
+    draftImportInputEl.value = '';
+  });
+}
+
 // ── 견적서 모드 (카탈로그 모드와 같은 #catalogView 안에서 body 클래스로 전환) ──────────
 // 카탈로그 모드: 기존 그대로(좌측 필터 사이드바 + 중앙 제품 그리드 + 우측 견적서 미리보기).
 // 견적서 모드: 좌측은 제품검색/G2B검색/카테고리 패널(#qmLeftPanel)로 바뀌고, 중앙 그리드는
@@ -3764,8 +3915,12 @@ document.querySelectorAll('.qm-collapsible[data-collapse-target]').forEach(funct
 
   wrap.addEventListener('mousedown', function(e){
     // 입력칸/버튼(공간 이름 수정·삭제·추가 폼 등) 위에서 누른 경우는 드래그를 시작하지
-    // 않습니다 — 텍스트 선택이나 버튼 클릭이 방해받지 않도록.
-    if(e.target.closest('input, button, .qm-room-tab-edit, .qm-room-tab-x')) return;
+    // 않습니다 — 텍스트 선택이나 버튼 클릭이 방해받지 않도록. 탭 자체(.qm-room-tab) 위에서
+    // 누른 경우도 제외합니다 — 탭에는 별도로 draggable=true(공간 순서 변경용 네이티브
+    // HTML5 드래그)가 걸려 있어, 이 좌우 스크롤 드래그와 겹치면 브라우저가 둘 중 하나만
+    // 선택하게 되어 동작이 꼬입니다. 탭이 아닌 빈 여백을 잡고 끌 때만 좌우 스크롤이 되고,
+    // 탭 자체를 잡고 끌면 순서 변경이 되도록 역할을 나눴습니다.
+    if(e.target.closest('input, button, .qm-room-tab, .qm-room-tab-edit, .qm-room-tab-x')) return;
     isDown = true;
     dragged = false;
     startX = e.pageX;
