@@ -324,6 +324,8 @@
     .add-room-form input{ flex:1 1 auto; width:auto; min-width:0; }
     .add-room-form input.roomname{ flex:1.4 1 auto; }
     .add-room-btn{ width:100%; }
+    .qm-bottom-row{ flex-direction:column; }
+    .qm-summary-box{ min-width:0; }
   }
 
   .layout{
@@ -393,11 +395,96 @@
   @media (max-width:1360px){
     body.quote-mode-active .layout-right{ width:100%; }
   }
+  /* 견적서 모드에서는 .layout-left(제품 그리드)가 통째로 사라져 그 자리가 빈 여백으로
+     낭비되고 있었습니다 — 왼쪽 사이드바를 넓혀 그 공간을 실제로 활용합니다(제품카드의
+     G2B번호/코드/품명이 잘리거나 어색하게 줄바꿈되던 문제도 함께 해결됩니다).
+     .layout-right는 폭을 고정값(vw 계산)으로 정하는 대신 남는 공간을 자동으로 채우도록
+     flex로 바꿔, 사이드바 폭이 얼마든 항상 딱 맞게 채워집니다. 1360px 이하에서는 기존처럼
+     세로로 쌓이는 반응형 레이아웃이 그대로 유지되도록 그 구간에서는 넓히지 않습니다. */
+  @media (min-width:1361px){
+    body.quote-mode-active .layout-sidebar{ width:380px; }
+    body.quote-mode-active .layout-right{ width:auto; flex:1 1 auto; max-width:1500px; }
+  }
+  /* 넓은 모니터에서는 .layout의 최대폭(1720px) 때문에 화면 좌우로 여백이 남는데,
+     견적서 모드에서는 그 여백도 실제로 쓰도록 최대폭을 넉넉하게 늘립니다. */
+  body.quote-mode-active .layout{ max-width:1960px; }
+  /* 견적서 모드에서는 왼쪽 제품 그리드가 아예 숨겨지므로(위), #printArea를 sticky+내부
+     스크롤로 고정해둘 이유가 없습니다 — 카탈로그 모드에서 이 sticky+내부스크롤 구조는
+     "왼쪽 그리드를 스크롤하는 동안 오른쪽 견적서 미리보기가 계속 보이도록" 하기 위한
+     것인데, 견적서 모드는 그 왼쪽 그리드 자체가 없기 때문입니다. 이 구조를 그대로 두면
+     페이지 자체의 스크롤바 + #quoteWrap 내부 스크롤바가 동시에 생겨(이중 스크롤) 특히
+     공간이 많아질수록 표를 보기 매우 어려워지므로, 견적서 모드에서는 스크롤 컨테이너를
+     페이지 전체 하나로 합칩니다(#quoteWrap이 내용 높이만큼 자연스럽게 늘어나고, 페이지가
+     통째로 스크롤됩니다). 인쇄 CSS(@media print)는 이 규칙들과 무관하게 항상 그대로 적용됩니다. */
+  body.quote-mode-active .layout-right{ position:static; }
+  body.quote-mode-active #printArea{ max-height:none; }
+  body.quote-mode-active #quoteWrap{ overflow-y:visible; }
+
+  /* 견적서 모드에서는 공간 추가/전환을 상단 바 대신 중앙(표 바로 위)에서 하므로,
+     상단의 "공간 목록" 바(공간 칩 + 공간추가 입력칸)는 숨깁니다. 카탈로그 모드는
+     기존 그대로 유지됩니다. */
+  body.quote-mode-active .space-block{ display:none; }
+
+  #qmRoomSwitcher{ display:none; }
+  body.quote-mode-active #qmRoomSwitcher{ display:block;margin-bottom:16px; }
+  .qm-room-switcher-label{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-3);margin-bottom:9px;
+  }
+  .qm-room-switcher-label b{ color:var(--ink);font-size:15px;font-weight:700; }
+  .qm-room-tabs{ display:flex;flex-wrap:wrap;gap:8px;align-items:center; }
+  .qm-room-tab{
+    display:flex;align-items:center;gap:7px;
+    font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;font-weight:600;
+    padding:9px 14px;border-radius:8px;border:1.5px solid var(--line);
+    background:#fff;color:var(--ink-2);cursor:pointer;
+  }
+  .qm-room-tab.active{ background:var(--teal);border-color:var(--teal);color:#fff; }
+  .qm-room-tab .qm-room-tab-edit, .qm-room-tab .qm-room-tab-x{ opacity:.6;font-size:11px; }
+  .qm-room-tab:hover .qm-room-tab-edit, .qm-room-tab:hover .qm-room-tab-x{ opacity:1; }
+  .qm-room-tab.pending-remove{ border-color:var(--rust);color:var(--rust-dark); }
+  .qm-room-tab.editing{
+    background:#fff;padding:6px 8px;gap:4px;
+  }
+  .qm-room-tab-editfloor, .qm-room-tab-editname{
+    font-family:'IBM Plex Sans KR',sans-serif;font-size:12px;
+    border:1px solid var(--line);border-radius:5px;padding:5px 7px;width:60px;
+  }
+  .qm-room-tab-editname{ width:84px; }
+  .qm-room-tab-editsave, .qm-room-tab-editcancel{
+    font-size:12px;border:none;background:var(--paper-dim);border-radius:5px;
+    width:22px;height:22px;cursor:pointer;
+  }
+  .qm-room-tab-editsave{ color:var(--teal-dark); }
+  .qm-room-tab-editcancel{ color:var(--ink-3); }
+  .qm-room-tab-add{
+    font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;
+    padding:9px 14px;border-radius:8px;border:1.5px dashed var(--teal);
+    background:var(--teal-light);color:var(--teal-dark);cursor:pointer;
+  }
+  .qm-room-tab-add:hover{ background:#fff; }
+  .qm-room-tab-addform{ display:flex;gap:6px;align-items:center; }
+  .qm-room-tab-addform input{
+    font-family:'IBM Plex Sans KR',sans-serif;font-size:12.5px;
+    border:1px solid var(--line);border-radius:6px;padding:8px 9px;width:84px;box-sizing:border-box;
+  }
+  .qm-room-tab-addform input.qm-room-tab-addname{ width:120px; }
+  .qm-room-tab-addform button{
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;
+    border:none;border-radius:6px;padding:9px 12px;cursor:pointer;
+  }
+  #qmAddRoomBtn{ background:var(--teal);color:#fff; }
+  #qmAddRoomCancelBtn{ background:var(--paper-dim);color:var(--ink-3); }
   /* #layoutSidebar 안에서 카탈로그 모드 콘텐츠 ↔ 견적서 모드 패널(#qmLeftPanel)을 서로
      바꿔 보여줍니다 — 같은 사이드바 칸(sticky 236px)을 그대로 재사용합니다. */
   #qmLeftPanel{ display:none; }
   body.quote-mode-active #layoutSidebar > *{ display:none; }
   body.quote-mode-active #layoutSidebar #qmLeftPanel{ display:block; }
+  /* 모드 토글(#viewModeGroup)은 사이드바 맨 위 고정 요소라 두 모드 모두에서 계속 보여야 합니다. */
+  body.quote-mode-active #layoutSidebar #viewModeGroup{ display:flex; }
+  #layoutSidebar #viewModeGroup{
+    width:100%;margin-left:0;margin-bottom:14px;gap:6px;flex-wrap:nowrap;
+  }
+  #layoutSidebar #viewModeGroup .draft-stage-btn{ flex:1;text-align:center;padding:9px 4px;font-size:10.5px; }
 
   .qm-panel-title{
     font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;
@@ -405,52 +492,71 @@
     margin:18px 0 8px;
   }
   .qm-left-panel > .qm-panel-title:first-child{ margin-top:0; }
-  .qm-search-input, .qm-g2b-row input{
+  .qm-search-input{
     width:100%;box-sizing:border-box;font-family:'IBM Plex Sans KR',sans-serif;
     font-size:12.5px;border:1px solid var(--line);border-radius:8px;
     padding:8px 10px;background:#fff;color:var(--ink);
   }
-  .qm-search-input:focus, .qm-g2b-row input:focus{border-color:var(--teal);outline:none;}
-  .qm-g2b-row{ display:flex;gap:6px; }
-  .qm-g2b-row input{ flex:1;min-width:0; }
-  .qm-g2b-row button{
-    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;
-    padding:8px 12px;background:var(--teal-dark);color:#fff;border:none;
-    border-radius:8px;cursor:pointer;white-space:nowrap;
-  }
-  .qm-g2b-row button:hover{background:var(--teal);}
-  .qm-search-results, .qm-g2b-result{
-    display:flex;flex-direction:column;gap:8px;margin-top:10px;
-    max-height:320px;overflow-y:auto;
+  .qm-search-input:focus{border-color:var(--teal);outline:none;}
+  /* 검색결과는 정확히 5개 정도만 보이는 고정 높이 + 자체 스크롤을 갖습니다 — 사이드바
+     전체를 스크롤해야만 다음 결과를 볼 수 있으면 카테고리/인증필터 등 아래 섹션에
+     도달하기 너무 번거롭다는 피드백을 반영했습니다. (표 영역의 "이중 스크롤"과는
+     다른 상황입니다 — 거긴 같은 내용에 스크롤이 두 겹 걸려 있던 문제였고, 여긴 검색결과라는
+     하나의 목적 있는 영역에 스크롤 하나만 두는 것이라 혼란이 없습니다.) */
+  .qm-search-results{
+    display:flex;flex-direction:column;gap:12px;margin-top:10px;
+    max-height:680px;overflow-y:auto;padding-right:2px;
   }
   .qm-empty{
     font-size:11.5px;color:var(--ink-3);text-align:center;padding:12px 6px;
   }
+  /* 카드를 크게 키워 한 화면에 1~2개만 보이더라도(나머지는 스크롤) 품명/규격/가격이
+     확실히 눈에 잘 들어오도록 했습니다 — 사이드바가 넓어진 만큼 그 공간을 실제로 씁니다. */
   .qm-result-card{
-    display:flex;align-items:center;gap:8px;
-    border:1px solid var(--line);border-radius:8px;padding:8px;background:#fff;
+    display:flex;align-items:center;gap:14px;
+    border:1.5px solid var(--line);border-radius:12px;padding:16px;background:#fff;
   }
   .qm-result-thumb{
-    width:36px;height:36px;flex:none;border-radius:6px;
+    width:92px;height:92px;flex:none;border-radius:10px;
     background:linear-gradient(135deg,#EDF2F6,#DCE6EE);
     display:flex;align-items:center;justify-content:center;color:#9CA3AF;overflow:hidden;
   }
-  .qm-result-thumb svg{width:18px;height:18px;}
+  .qm-result-thumb svg{width:38px;height:38px;}
   .qm-result-thumb img{width:100%;height:100%;object-fit:cover;}
   .qm-result-info{flex:1;min-width:0;}
-  .qm-result-name{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .qm-result-spec{font-size:10.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .qm-result-price{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--teal-dark);}
+  /* 제품이 많아질수록 품명/코드/G2B번호가 서로 헷갈린다는 피드백 반영 — G2B번호를 배지로
+     맨 위에 항상 먼저 보여주고, 코드는 그 옆에 작게 병기, 품명은 잘리지 않도록 줄바꿈 허용 */
+  .qm-result-badges{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .qm-code-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);}
+  .qm-result-name{font-size:16px;font-weight:700;color:var(--ink);line-height:1.4;}
+  .qm-result-spec{font-size:12.5px;color:var(--ink-3);margin-top:3px;}
+  .qm-result-price{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--teal-dark);margin-top:5px;}
   .qm-g2b-badge{
-    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;
-    color:var(--teal-dark);background:var(--teal-light);padding:2px 7px;border-radius:8px;margin-bottom:2px;
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
+    color:var(--teal-dark);background:var(--teal-light);padding:3px 9px;border-radius:9px;
   }
   .qm-add-btn{
-    flex:none;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;
-    color:#fff;background:var(--teal);border:none;border-radius:6px;padding:7px 9px;cursor:pointer;white-space:nowrap;
+    flex:none;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;
+    color:#fff;background:var(--teal);border:none;border-radius:8px;padding:10px 14px;cursor:pointer;white-space:nowrap;
   }
   .qm-add-btn:hover{background:var(--teal-dark);}
-  .qm-cat-list{display:flex;flex-direction:column;gap:4px;}
+
+  /* 최근 검색/담기 목록 — 코드 · 품명 · 가격을 한 줄로 보여주는 간단한 퀵애드 리스트 */
+  .qm-recent-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;max-height:170px;overflow-y:auto;}
+  .qm-recent-row{
+    display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:6px;
+    border:1px solid var(--line);background:#fff;font-size:11px;
+  }
+  .qm-recent-code{flex:none;color:var(--ink-3);font-size:9.5px;}
+  .qm-recent-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2);}
+  .qm-recent-price{flex:none;color:var(--teal-dark);font-weight:700;font-size:10.5px;}
+  .qm-recent-add{
+    flex:none;width:20px;height:20px;border-radius:5px;border:none;background:var(--teal);color:#fff;
+    font-weight:800;font-size:13px;cursor:pointer;line-height:1;padding:0;
+  }
+  .qm-recent-add:hover{background:var(--teal-dark);}
+  .qm-cat-list{display:flex;flex-direction:column;gap:4px;max-height:230px;overflow-y:auto;padding-right:2px;}
+  .qm-cert-list{max-height:180px;overflow-y:auto;}
   .qm-cat-btn{
     display:flex;justify-content:space-between;text-align:left;
     font-family:'IBM Plex Sans KR',sans-serif;font-size:12px;color:var(--ink-2);
@@ -465,19 +571,50 @@
   .qm-help-box ul{margin:0;padding-left:16px;}
   .qm-help-box li{font-size:11px;color:var(--ink-3);line-height:1.6;}
 
-  /* G2B 번호 빠른 추가 — 번호 입력 + Enter로 바로 담기는 한 줄짜리 입력창 */
-  .qm-quickadd-row{
-    display:flex;align-items:center;gap:8px;margin-top:12px;
-    border:1.5px dashed var(--line);border-radius:8px;padding:10px 14px;background:var(--paper-dim);
-  }
-  .qm-quickadd-icon{ color:var(--teal-dark);font-weight:800;font-size:14px; }
-  .qm-quickadd-row input{
-    flex:1;border:none;background:transparent;font-size:13px;color:var(--ink);outline:none;
-  }
-  .qm-quickadd-row input::placeholder{ color:#9CA3AF; }
-  .qm-quickadd-row:focus-within{ border-color:var(--teal); background:#fff; }
+  /* 공급가액/부가세/합계 요약 — 오른쪽 정렬 한 줄 (예전엔 왼쪽에 전역 G2B 빠른추가가 나란히
+     있었지만, 공간별 빠른추가로 대체되어 이 줄에는 요약 박스만 남습니다) */
+  .qm-bottom-row{ display:flex; gap:14px; align-items:stretch; margin-top:12px; justify-content:flex-end; }
 
-  /* 메모 — .layout-right(#printArea) 안, 화면 전용 (견적 요약 박스는 사용자 피드백에 따라 제거) */
+  /* 공간(방)별 G2B 번호 빠른 추가 — 표의 각 공간 헤더 행 안, 방 이름 오른쪽에 붙는 작은 입력창.
+     특정 "선택된 공간" 개념 없이, 원하는 공간의 행에서 바로 번호를 입력하면 그 공간에 담깁니다. */
+  .qm-room-row-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .qm-room-quickadd{
+    display:flex;align-items:center;gap:6px;flex:0 0 auto;
+    border:1.5px dashed var(--ink-3);border-radius:6px;padding:4px 8px;background:#fff;
+  }
+  .qm-room-quickadd input{
+    border:none;background:transparent;font-size:11.5px;color:var(--ink);outline:none;width:200px;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .qm-room-quickadd input::placeholder{ color:#9CA3AF;font-family:'IBM Plex Sans KR',sans-serif; }
+  .qm-room-quickadd:focus-within{ border-color:var(--teal);border-style:solid; }
+  tr.grp-room[data-room-id]:hover .qm-room-quickadd{ background:#fff; }
+
+  /* 좌측 패널(최근 검색/카테고리/인증 필터) 접기·펼치기 토글 — 대상 표시/숨김은 JS에서
+     직접 style.display를 바꿔 처리하므로(대상 엘리먼트가 항상 바로 다음 형제라는 가정이
+     불필요), 여기서는 아이콘 회전만 담당합니다. */
+  .qm-panel-title.qm-collapsible{ cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none; }
+  .qm-collapse-icon{ font-size:10px;color:var(--ink-3);transition:transform .15s; }
+  .qm-panel-title.qm-collapsible.collapsed .qm-collapse-icon{ transform:rotate(-90deg); }
+
+  /* 공급가액/부가세/합계 요약 박스 — 화면 전용(no-print). 표에 이미 입력된 할인율을 반영한
+     공급가액을 보여줍니다. 인쇄/PDF 출력물의 금액 표기·열 구성과는 완전히 무관합니다
+     (그쪽은 항상 기존 그대로 유지됩니다). */
+  .qm-summary-box{
+    min-width:230px;background:#fff;border:1.5px solid var(--line);border-radius:8px;
+    padding:10px 18px;display:flex;flex-direction:column;justify-content:center;gap:5px;
+  }
+  .qm-summary-line{
+    display:flex;justify-content:space-between;gap:14px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-3);
+  }
+  .qm-summary-line span:last-child{ font-weight:700;color:var(--ink); }
+  .qm-summary-grand{
+    border-top:1px solid var(--line);margin-top:3px;padding-top:6px;font-size:14px;
+  }
+  .qm-summary-grand span:last-child{ color:var(--teal-dark);font-weight:800;font-size:15.5px; }
+
+  /* 메모 — .layout-right(#printArea) 안, 화면 전용 */
   .qm-memo-box{ margin-top:16px; }
   .qm-memo-box textarea{
     width:100%;box-sizing:border-box;min-height:64px;resize:vertical;
@@ -810,8 +947,6 @@
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-total{ grid-area:total;display:flex;flex-direction:column;gap:2px;align-items:flex-end; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-qty .qty-input{ width:100%; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price .price-input{ width:100%; }
-    .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price .price-with-pct{ flex-direction:column;align-items:stretch;gap:3px; }
-    .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price .price-pct-input{ width:100%; }
     .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-g2b.col-g2b{ display:none; }
   }
 
@@ -845,10 +980,8 @@
     }
     body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-qty .qty-input{ width:56px; }
     body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price .price-input{ width:88px; }
-    body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-price .price-with-pct{ flex-direction:row;align-items:center; }
     body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-g2b.col-g2b{ display:table-cell !important; }
-    body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-discpct,
-    body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-discamt{
+    body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-discpct{
       display:table-cell;text-align:center;white-space:nowrap;
     }
     body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] td.row-remark{
@@ -895,9 +1028,6 @@
     }
     body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] .discpct-input{
       width:64px; font-size:14px; padding:6px 7px;
-    }
-    body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] .row-discamt-val{
-      font-size:14.5px;
     }
     body.quote-mode-active .layout-right table.qtable tbody tr[data-room-id][data-code] .g2b-text{
       font-size:12.5px;
@@ -961,17 +1091,19 @@
   .remark-input:focus{border-color:var(--teal);background:#fff;outline:none;}
   .remark-input::placeholder{color:#A9B7C3;}
   .row-remark{text-align:left;}
-  /* 할인율(%)/할인금액 — 견적서 모드에서 화면에 실제로 보이는 새 칸. 담당자 내부 협의용
-     정보라 인쇄(견적서/발주서 모두)에는 절대 나타나지 않습니다(아래 @media print의
-     qcol-discpct/qcol-discamt를 항상 width:0으로 접어두는 규칙이 그 구현입니다). */
-  .row-discpct, .row-discamt{ text-align:center; }
+  /* 증감율(%) — 정가 기준 단가 조정 계산기입니다(단가칸 옆에 따로 있던 %입력과 통합됨).
+     입력하면 단가·총금액이 실시간으로 바뀝니다. 화면 전용이며, 인쇄(견적서/발주서 모두)에는
+     절대 나타나지 않습니다(아래 @media print의 qcol-discpct를 항상 width:0으로 접어두는
+     규칙이 그 구현입니다). */
+  .row-discpct{ text-align:center; }
   .discpct-input{
     width:56px;box-sizing:border-box;text-align:center;
-    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);
-    border:1px solid var(--line);background:#fff;padding:4px 5px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-dark);
+    border:1px solid var(--line);background:var(--teal-light);padding:4px 5px;
+    border-radius:4px;
   }
-  .discpct-input:focus{border-color:var(--teal);outline:none;}
-  .row-discamt-val{ font-weight:700;color:var(--rust-dark); }
+  .discpct-input::placeholder{color:#8FB6CC;}
+  .discpct-input:focus{border-color:var(--teal);outline:none;background:#fff;}
   .qty-input{
     width:64px;box-sizing:border-box;text-align:right;
     font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);
@@ -984,15 +1116,6 @@
     border:1px solid var(--line);background:#fff;padding:4px 5px;
   }
   .price-input:focus{border-color:var(--teal);outline:none;}
-  .price-with-pct{ display:flex;align-items:center;gap:4px; }
-  .price-pct-input{
-    width:46px;box-sizing:border-box;text-align:right;
-    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--teal-dark);
-    border:1px solid var(--line);background:var(--teal-light);padding:4px 5px;
-    border-radius:4px;
-  }
-  .price-pct-input::placeholder{color:#8FB6CC;}
-  .price-pct-input:focus{border-color:var(--teal);outline:none;background:#fff;}
   .row-price,.row-total{font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
   .row-total{font-weight:600;}
   .row-thumb{width:30px;height:30px;border:1px solid var(--line);background:var(--paper-dim);display:flex;align-items:center;justify-content:center;border-radius:8px;overflow:hidden;}
@@ -1430,11 +1553,11 @@
     .qcol-remark{ width:0; }
     .row-remark{ display:none !important; padding:0 !important; width:0 !important; }
     .col-remark{ display:none !important; }
-    /* 할인율(%)/할인금액 칸 — 견적서 모드 화면 전용. 발주서(body.doctype-po)에도 예외를
-       두지 않습니다 — "할인율은 절대 인쇄에 넣지 않는다"는 요구사항이 그대로 유지됩니다. */
-    .qcol-discpct, .qcol-discamt{ width:0; }
-    .row-discpct, .row-discamt{ display:none !important; padding:0 !important; width:0 !important; }
-    .col-discpct, .col-discamt{ display:none !important; }
+    /* 증감율(%) 칸 — 견적서 모드 화면 전용. 발주서(body.doctype-po)에도 예외를
+       두지 않습니다 — "증감율은 절대 인쇄에 넣지 않는다"는 요구사항이 그대로 유지됩니다. */
+    .qcol-discpct{ width:0; }
+    .row-discpct{ display:none !important; padding:0 !important; width:0 !important; }
+    .col-discpct{ display:none !important; }
 
     /* 셀 공통 스타일 — 폰트 Pretendard, 본문 11pt, 지정된 여백/줄간격 그대로 적용 */
     table.qtable td{
@@ -1502,10 +1625,9 @@
        겹쳐 보이던 문제 — 칸 자체 너비를 썸네일보다 넉넉히 넓히고, 혹시 남는 오차는
        overflow:hidden으로 잘라 다른 칸을 침범하지 않도록 막습니다. */
     .row-thumb-cell{ overflow:hidden; }
-    /* 할인율(%) 입력칸은 내부 조정용이라 정식 견적서(PDF)에는 노출하지 않습니다.
-       발주서(body.doctype-po)에서도 마찬가지로 할인율은 절대 노출하지 않습니다 —
-       이 규칙에 body.doctype-po 예외를 두지 않는 것 자체가 그 요구사항의 구현입니다. */
-    .price-pct-input{ display:none !important; }
+    /* 증감율(%) 입력칸은 내부 조정용이라 정식 견적서(PDF)에는 노출하지 않습니다. 발주서
+       (body.doctype-po)에서도 마찬가지로 증감율은 절대 노출하지 않습니다 — 위 .row-discpct
+       규칙에 body.doctype-po 예외를 두지 않는 것 자체가 그 요구사항의 구현입니다. */
 
     /* ============================================================
        발주서(Purchase Order) 모드 — body.doctype-po일 때만 적용.
@@ -1652,14 +1774,6 @@
           <input type="text" id="managerPhoneInput" placeholder="010-0000-0000" class="mono">
         </div>
       </div>
-      <!-- 카탈로그 모드(기존 그대로) / 견적서 모드(신규 — 왼쪽 제품검색 + 오른쪽 견적서를
-           넓게 쓰는 화면). 공간 추가/수정 바(.spacebar)는 이 토글과 무관하게 항상 상단에
-           고정되어 있고, 인쇄/PDF 결과물은 renderQuote()가 그대로 만들기 때문에 두 모드
-           어느 쪽에서 인쇄하든 완전히 동일한 문서가 나옵니다. -->
-      <div class="draft-stage-group no-print" id="viewModeGroup">
-        <button type="button" class="draft-stage-btn active" data-viewmode="browse">카탈로그 모드</button>
-        <button type="button" class="draft-stage-btn" data-viewmode="quote">📝 견적서 모드</button>
-      </div>
       <div class="draft-stage-group no-print" id="draftStageGroup">
         <button type="button" class="draft-stage-btn active" data-stage="최초안">최초안</button>
         <button type="button" class="draft-stage-btn" data-stage="수정안">수정안</button>
@@ -1693,6 +1807,15 @@
 <div class="layout">
 
   <nav class="layout-sidebar" id="layoutSidebar">
+    <!-- 카탈로그 모드(기존 그대로) / 견적서 모드(왼쪽 제품검색 + 오른쪽 견적서를 넓게 쓰는 화면)
+         전환 — 사이드바 맨 위, 제품 검색란 바로 위에 위치해 두 모드 모두에서 항상 먼저 보입니다.
+         공간 추가/수정 바(.spacebar)는 이 토글과 무관하게 항상 상단에 고정되어 있고, 인쇄/PDF
+         결과물은 renderQuote()가 그대로 만들기 때문에 두 모드 어느 쪽에서 인쇄하든 완전히
+         동일한 문서가 나옵니다. -->
+    <div class="draft-stage-group no-print" id="viewModeGroup">
+      <button type="button" class="draft-stage-btn active" data-viewmode="browse">카탈로그 모드</button>
+      <button type="button" class="draft-stage-btn" data-viewmode="quote">📝 견적서 모드</button>
+    </div>
     <button class="filter-reset-btn no-print" id="filterResetBtn" type="button">↻ 전체 필터 초기화</button>
     <div class="sidebar-search">
       <input id="searchInput" type="text" placeholder="🔍 품명 · 모델코드 · G2B번호 검색">
@@ -1728,22 +1851,23 @@
       <input type="text" id="qmSearchInput" class="qm-search-input mono" placeholder="품명 · 코드 · G2B번호 검색">
       <div class="qm-search-results" id="qmSearchResults"></div>
 
-      <p class="qm-panel-title">G2B 번호 검색</p>
-      <div class="qm-g2b-row">
-        <input type="text" id="qmG2bInput" class="mono" placeholder="예: 4011471">
-        <button type="button" id="qmG2bSearchBtn">검색</button>
-      </div>
-      <div class="qm-g2b-result" id="qmG2bResult"></div>
+      <p class="qm-panel-title qm-collapsible" data-collapse-target="qmRecentList">최근 검색 <span class="qm-collapse-icon">▾</span></p>
+      <div class="qm-recent-list" id="qmRecentList"></div>
 
-      <p class="qm-panel-title">카테고리</p>
+      <p class="qm-panel-title qm-collapsible" data-collapse-target="qmCatList">카테고리 <span class="qm-collapse-icon">▾</span></p>
       <div class="qm-cat-list" id="qmCatList"></div>
+
+      <p class="qm-panel-title qm-collapsible" data-collapse-target="qmCertFilterBar">인증 필터 <span class="qm-collapse-icon">▾</span></p>
+      <div class="sidebar-list qm-cert-list" id="qmCertFilterBar"></div>
 
       <div class="qm-help-box">
         <p class="qm-help-title">사용 방법</p>
         <ul>
           <li>검색 결과의 <b>+ 추가</b> 버튼을 누르면 현재 선택된 공간에 담깁니다</li>
-          <li>오른쪽 견적서 표에서 수량 · 단가 · 할인율 · 비고를 바로 수정할 수 있습니다</li>
-          <li>할인율(%)은 화면에서만 보이며, 인쇄/PDF에는 표시되지 않습니다</li>
+          <li>각 공간 이름 옆 입력칸에 G2B 번호를 입력하고 Enter를 누르면 그 공간에 바로 담깁니다</li>
+          <li>오른쪽 견적서 표에서 수량 · 단가 · 증감율 · 비고를 바로 수정할 수 있습니다</li>
+          <li>증감율(%)에 값을 입력하면 단가·총금액이 정가 기준으로 실시간 조정됩니다 (예: -5 입력 시 정가의 5% 할인)</li>
+          <li>증감율(%) 칸은 화면에서만 보이며, 인쇄/PDF에는 표시되지 않습니다</li>
         </ul>
       </div>
     </div>
@@ -1801,6 +1925,14 @@
         </div>
       </div>
 
+      <!-- 견적서 모드 전용 공간 전환/추가 UI — 카탈로그 모드의 상단 "공간 목록" 바
+           대신 표 바로 위, 화면 중앙에서 공간을 전환/추가/수정합니다. state.rooms/
+           state.activeRoomId를 그대로 공유하므로 어느 쪽에서 조작해도 동일하게 반영됩니다. -->
+      <div class="qm-room-switcher no-print" id="qmRoomSwitcher">
+        <div class="qm-room-switcher-label">공간: <b id="qmActiveRoomLabel">-</b></div>
+        <div class="qm-room-tabs" id="qmRoomTabs"></div>
+      </div>
+
       <div class="quote-head">
         <h2>공간별 견적서</h2>
         <div class="quote-stats">
@@ -1814,17 +1946,20 @@
       <p class="drag-hint no-print" id="dragHint">✓ 품목을 클릭해 선택한 뒤, 원하는 공간으로 드래그하거나 목록을 스크롤해서 해당 공간 이름을 클릭하면 이동/복사됩니다 — 같은 층은 이동, 다른 층은 복사됩니다 (Ctrl로 반대 동작)</p>
       <div id="quoteWrap"></div>
 
-      <!-- G2B 번호 빠른 추가 — #quoteWrap 밖의 별도 요소라 renderQuote()가 다시 그릴 때마다
-           입력 중이던 값이나 포커스가 사라지지 않습니다. 번호를 입력하고 Enter를 누르면
-           현재 선택된 공간(state.activeRoomId)에 바로 담깁니다. -->
-      <div class="qm-quickadd-row no-print" id="qmQuickAddRow">
-        <span class="qm-quickadd-icon">+</span>
-        <input type="text" id="qmQuickAddInput" class="mono" placeholder="G2B 번호를 입력하고 Enter를 누르면 담깁니다 (예: 25900654)">
+      <!-- 공급가액/부가세/합계 요약 — #quoteWrap 밖의 별도 요소라 renderQuote()가 다시 그릴
+           때마다 입력 중이던 값이나 포커스가 사라지지 않습니다. G2B 번호 빠른추가는 이제
+           표 안 각 공간(방) 헤더 행에서 바로 입력하도록 옮겨졌습니다(전역 입력창 제거).
+           요약 박스는 화면 전용(no-print)이며, 표에 이미 반영된 증감율을 포함한 실제
+           공급가액을 보여줍니다 — 인쇄/PDF 출력물에는 기존과 동일하게 전혀 나타나지 않습니다. -->
+      <div class="qm-bottom-row">
+        <div class="qm-summary-box no-print" id="qmSummaryBox">
+          <div class="qm-summary-line"><span>공급가액</span><span id="qmSummarySupply">0원</span></div>
+          <div class="qm-summary-line"><span>부가세(10%)</span><span id="qmSummaryVat">0원</span></div>
+          <div class="qm-summary-line qm-summary-grand"><span>합계</span><span id="qmSummaryGrand">0원</span></div>
+        </div>
       </div>
 
-      <!-- 메모 — 화면 전용(no-print). 인쇄·PDF에는 나타나지 않습니다.
-           (견적 요약 박스는 사용자 피드백에 따라 제거 — 상단 통계 카드로 충분하고,
-           그 자리를 표 자체가 더 크고 잘 보이도록 쓰는 것으로 대체했습니다.) -->
+      <!-- 메모 — 화면 전용(no-print). 인쇄·PDF에는 나타나지 않습니다. -->
       <div class="qm-memo-box no-print">
         <label for="quoteMemoInput" class="qm-panel-title" style="margin:0 0 6px;">메모</label>
         <textarea id="quoteMemoInput" placeholder="메모를 입력하세요... (내부용 · 인쇄에 포함되지 않음)"></textarea>
@@ -2727,6 +2862,102 @@ function renderRoomChips(){
   });
   var ar = findRoom(state.activeRoomId);
   document.getElementById('activeNote').textContent = state.rooms.length + '개 공간' + (ar ? (' · 현재 담는 위치 → ' + ar.floor + ' ' + ar.name) : ' · 공간을 선택하세요');
+
+  renderQmRoomTabs();
+}
+
+// 견적서 모드 전용 — 공간 목록/추가를 상단 바 대신 중앙(표 바로 위)에서 탭 형태로 보여줍니다.
+// 카탈로그 모드의 #roomChips/#addRoomForm과 완전히 같은 데이터(state.rooms/state.activeRoomId)를
+// 다루므로, 위 renderRoomChips()와 항상 함께(끝에서) 호출되어 둘이 서로 어긋나지 않습니다.
+// (화면에는 body.quote-mode-active일 때만 보이도록 CSS로 숨겨져 있어, 카탈로그 모드에서
+// 매번 다시 그리는 비용은 아주 작은 DOM 갱신 정도로 무시할만한 수준입니다.)
+var qmAddingRoom = false;
+function renderQmRoomTabs(){
+  var wrap = document.getElementById('qmRoomTabs');
+  var labelEl = document.getElementById('qmActiveRoomLabel');
+  if(!wrap) return;
+  var activeRoom = findRoom(state.activeRoomId);
+  if(labelEl) labelEl.textContent = activeRoom ? (activeRoom.floor + ' - ' + activeRoom.name) : '공간을 선택하세요';
+  wrap.innerHTML = '';
+
+  state.rooms.forEach(function(r){
+    var isPending = pendingRemoveRoomId === r.id;
+    var isEditing = editingRoomId === r.id;
+    var tab = document.createElement('div');
+    tab.className = 'qm-room-tab' + (r.id === state.activeRoomId ? ' active' : '') + (isPending ? ' pending-remove' : '') + (isEditing ? ' editing' : '');
+
+    if(isEditing){
+      tab.innerHTML =
+        '<input type="text" class="qm-room-tab-editfloor mono" value="' + r.floor.replace(/"/g,'&quot;') + '" placeholder="층">' +
+        '<input type="text" class="qm-room-tab-editname mono" value="' + r.name.replace(/"/g,'&quot;') + '" placeholder="실명">' +
+        '<button type="button" class="qm-room-tab-editsave" title="저장">✓</button>' +
+        '<button type="button" class="qm-room-tab-editcancel" title="취소">✕</button>';
+      var floorInp = tab.querySelector('.qm-room-tab-editfloor');
+      var nameInp = tab.querySelector('.qm-room-tab-editname');
+      function commitEdit(){ saveRoomEdit(r.id, floorInp.value, nameInp.value); }
+      function cancelEdit(){ editingRoomId = null; renderRoomChips(); }
+      tab.querySelector('.qm-room-tab-editsave').onclick = function(e){ e.stopPropagation(); commitEdit(); };
+      tab.querySelector('.qm-room-tab-editcancel').onclick = function(e){ e.stopPropagation(); cancelEdit(); };
+      [floorInp, nameInp].forEach(function(inp){
+        inp.addEventListener('click', function(e){ e.stopPropagation(); });
+        inp.addEventListener('keydown', function(e){
+          if(e.key === 'Enter') commitEdit();
+          if(e.key === 'Escape') cancelEdit();
+        });
+      });
+      tab.onclick = function(e){ e.stopPropagation(); };
+      wrap.appendChild(tab);
+      return;
+    }
+
+    tab.innerHTML =
+      '<span class="qm-room-tab-label">' + escHtml(r.floor) + ' · ' + escHtml(r.name) + '</span>' +
+      '<span class="qm-room-tab-edit" title="공간 이름 수정">✎</span>' +
+      '<span class="qm-room-tab-x">' + (isPending ? '다시 클릭' : '✕') + '</span>';
+    tab.querySelector('.qm-room-tab-edit').onclick = function(e){
+      e.stopPropagation();
+      editingRoomId = r.id;
+      renderRoomChips();
+    };
+    tab.querySelector('.qm-room-tab-x').onclick = function(e){
+      e.stopPropagation();
+      requestRemoveRoom(r.id);
+    };
+    tab.onclick = function(){ state.activeRoomId = r.id; render(); };
+    wrap.appendChild(tab);
+  });
+
+  if(qmAddingRoom){
+    var addForm = document.createElement('div');
+    addForm.className = 'qm-room-tab-addform';
+    addForm.innerHTML =
+      '<input type="text" id="qmNewFloor" class="mono" placeholder="층 (예 3층)">' +
+      '<input type="text" id="qmNewRoom" class="mono qm-room-tab-addname" placeholder="실명 (예 교무실)">' +
+      '<button type="button" id="qmAddRoomBtn">추가</button>' +
+      '<button type="button" id="qmAddRoomCancelBtn" title="취소">✕</button>';
+    wrap.appendChild(addForm);
+    var qmFloorEl = document.getElementById('qmNewFloor');
+    var qmRoomEl = document.getElementById('qmNewRoom');
+    document.getElementById('qmAddRoomBtn').addEventListener('click', function(){
+      qmAddingRoom = false;
+      addRoomFromInputs(qmFloorEl, qmRoomEl);
+    });
+    document.getElementById('qmAddRoomCancelBtn').addEventListener('click', function(){
+      qmAddingRoom = false;
+      renderQmRoomTabs();
+    });
+    qmRoomEl.addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ qmAddingRoom = false; addRoomFromInputs(qmFloorEl, qmRoomEl); }
+      if(e.key === 'Escape'){ qmAddingRoom = false; renderQmRoomTabs(); }
+    });
+    qmFloorEl.focus();
+  } else {
+    var addTab = document.createElement('div');
+    addTab.className = 'qm-room-tab-add';
+    addTab.textContent = '+ 새로운 공간';
+    addTab.onclick = function(){ qmAddingRoom = true; renderQmRoomTabs(); };
+    wrap.appendChild(addTab);
+  }
 }
 
 function requestRemoveRoom(id){
@@ -2755,16 +2986,21 @@ function removeRoom(id){
   render();
 }
 
-document.getElementById('addRoomBtn').addEventListener('click', function(){
-  var f = document.getElementById('newFloor').value.trim();
-  var n = document.getElementById('newRoom').value.trim();
+// 공간 추가 — 카탈로그 모드 상단 바(#newFloor/#newRoom)와 견적서 모드의 중앙 공간탭
+// "+ 새로운 공간" 인라인폼이 이 함수 하나를 공유합니다(입력 요소만 다르게 전달).
+function addRoomFromInputs(floorEl, roomEl){
+  var f = floorEl.value.trim();
+  var n = roomEl.value.trim();
   if(!f || !n){ showToast('층과 실명을 모두 입력해주세요'); return; }
   var id = 'r' + (roomSeq++);
   state.rooms.push({id:id, floor:f, name:n, items:{}, specOverrides:{}, priceOverrides:{}, remarks:{}, discountPct:{}});
   state.activeRoomId = id;
-  document.getElementById('newFloor').value = '';
-  document.getElementById('newRoom').value = '';
+  floorEl.value = '';
+  roomEl.value = '';
   render();
+}
+document.getElementById('addRoomBtn').addEventListener('click', function(){
+  addRoomFromInputs(document.getElementById('newFloor'), document.getElementById('newRoom'));
 });
 
 function addToCart(code){
@@ -2774,6 +3010,20 @@ function addToCart(code){
   room.items[code] += 1;
   showToast(room.floor + ' ' + room.name + '에 담았습니다');
   pushRecent(code);
+  if(typeof quoteViewMode !== 'undefined' && quoteViewMode === 'quote') renderQmRecentList();
+  renderQuote();
+}
+
+// 공간을 명시적으로 지정해서 담기 — addToCart()는 항상 state.activeRoomId(현재 선택된 공간)에만
+// 담기지만, 공간별 G2B 빠른추가는 사용자가 표에서 직접 클릭한 그 공간에 담아야 하므로 별도로 둡니다.
+function addToCartInRoom(roomId, code){
+  var room = findRoom(roomId);
+  if(!room) return;
+  if(!room.items[code]) room.items[code] = 0;
+  room.items[code] += 1;
+  showToast(room.floor + ' ' + room.name + '에 담았습니다');
+  pushRecent(code);
+  if(typeof quoteViewMode !== 'undefined' && quoteViewMode === 'quote') renderQmRecentList();
   renderQuote();
 }
 
@@ -2819,27 +3069,6 @@ function setPrice(roomId, code, value){
   renderQuote();
 }
 
-// 단가 옆 할인율(%) 계산기 — 영업자/관리매니저(및 관리자)만 볼 수 있는 단가 입력칸에서만 노출됩니다.
-// 정가(카탈로그 원래 단가) 기준으로 계산하므로, -5를 입력하면 정가의 5% 할인된 금액이 단가에 그대로 반영됩니다.
-// (이미 할인이 적용된 단가에 다시 -5를 곱하는 방식이 아니라, 매번 정가 기준으로 새로 계산합니다.)
-function setPricePercent(roomId, code, value){
-  if(!hasPermission('custom_price')) return;
-  var room = findRoom(roomId);
-  if(!room) return;
-  var p = findProduct(code);
-  if(!p) return;
-  var pct = parseFloat(value);
-  if(!room.priceOverrides) room.priceOverrides = {};
-  if(!isFinite(pct) || pct === 0){
-    delete room.priceOverrides[code];
-  } else {
-    var newPrice = Math.round(p.price * (1 + pct / 100));
-    if(newPrice < 0) newPrice = 0;
-    if(newPrice === p.price){ delete room.priceOverrides[code]; } else { room.priceOverrides[code] = newPrice; }
-  }
-  renderQuote();
-}
-
 function setSpec(roomId, code, value){
   var room = findRoom(roomId);
   if(!room) return;
@@ -2870,19 +3099,31 @@ function setRemark(roomId, code, value){
   renderQuote();
 }
 
-// 할인율(%) — 견적서 모드에서 화면에 실제로 보이는 값입니다(내부 helper였던 price-pct-input과는
-// 별개). 정가가 아니라 "이번 견적의 단가(effectivePrice)" 기준으로 할인 금액을 계산하며,
-// 인쇄(견적서/발주서 모두)에는 절대 나타나지 않습니다 — qcol-discpct/qcol-discamt를 항상
-// width:0으로 접어두는 CSS 규칙이 그 요구사항의 구현입니다.
+// 증감율(%) — 예전에는 "할인율(총금액에서만 차감되는 표시용 %)"과 "단가칸 옆 %입력(단가 자체를
+// 바꾸는 계산기)"가 따로 있었지만, 사용자가 둘을 하나로 합쳐 달라고 요청해 증감율(%) 칸 하나로
+// 통합했습니다. 이제 여기 입력하면 단가·총금액 숫자 자체가 실시간으로 바뀝니다 — 정가(카탈로그
+// 원래 단가) 기준으로 매번 새로 계산하므로, 이미 조정된 단가에 다시 곱하는 방식이 아닙니다.
+// 단가를 직접 편집하는 것과 동일하게 가격을 바꾸는 기능이라 custom_price 권한이 있어야만 편집
+// UI가 보이고(위 canEditPrice 분기) 이 함수도 동일하게 권한을 재확인합니다.
+// 인쇄(견적서/발주서 모두)에는 절대 나타나지 않습니다 — qcol-discpct를 항상 width:0으로
+// 접어두는 CSS 규칙이 그 요구사항의 구현입니다.
 function setDiscountPct(roomId, code, value){
+  if(!hasPermission('custom_price')) return;
   var room = findRoom(roomId);
   if(!room) return;
+  var p = findProduct(code);
+  if(!p) return;
+  var pct = parseFloat(value);
   if(!room.discountPct) room.discountPct = {};
-  var n = parseFloat(value);
-  if(!isFinite(n) || n <= 0){
+  if(!room.priceOverrides) room.priceOverrides = {};
+  if(!isFinite(pct) || pct === 0){
     delete room.discountPct[code];
+    delete room.priceOverrides[code];
   } else {
-    room.discountPct[code] = Math.min(100, n);
+    room.discountPct[code] = pct;
+    var newPrice = Math.round(p.price * (1 + pct / 100));
+    if(newPrice < 0) newPrice = 0;
+    room.priceOverrides[code] = newPrice;
   }
   renderQuote();
 }
@@ -2895,7 +3136,7 @@ function renderQuote(){
     if(floors.indexOf(r.floor) === -1) floors.push(r.floor);
   });
 
-  var grandQty = 0, grandTotal = 0, grandDiscount = 0, roomsWithItems = 0;
+  var grandQty = 0, grandTotal = 0, roomsWithItems = 0;
 
   if(state.rooms.length === 0 || floors.length === 0){
     wrap.innerHTML = '<div class="empty-quote">공간을 추가하고 카탈로그에서 품목을 담아주세요</div>';
@@ -2903,12 +3144,12 @@ function renderQuote(){
     var html = '<table class="qtable">' +
       '<colgroup>' +
         '<col class="qcol-code"><col class="qcol-thumb"><col class="qcol-name"><col class="qcol-spec">' +
-        '<col class="qcol-qty"><col class="qcol-price"><col class="qcol-total"><col class="qcol-discpct"><col class="qcol-discamt">' +
+        '<col class="qcol-qty"><col class="qcol-price"><col class="qcol-total"><col class="qcol-discpct">' +
         '<col class="qcol-g2b"><col class="qcol-remark"><col class="qcol-remove">' +
       '</colgroup>' +
       '<thead><tr>' +
       '<th>코드</th><th>이미지</th><th>품목</th><th>규격</th><th>수량</th><th>단가</th><th>총금액</th>' +
-      '<th class="col-discpct">할인율(%)</th><th class="col-discamt">할인금액</th>' +
+      '<th class="col-discpct">증감율(%)</th>' +
       '<th class="col-g2b">G2B번호</th><th class="col-remark">비고</th><th></th>' +
       '</tr></thead>';
 
@@ -2919,10 +3160,17 @@ function renderQuote(){
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
         var codes = getOrderedCodes(room);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room" data-room-id="' + room.id + '"><td colspan="12">' + escHtml(room.name) + '</td></tr>';
+        var roomHtml = '<tr class="grp-room" data-room-id="' + room.id + '"><td colspan="11">' +
+          '<div class="qm-room-row-head">' +
+            '<span class="qm-room-row-name">' + escHtml(room.name) + '</span>' +
+            '<span class="qm-room-quickadd no-print" data-room-quickadd="' + room.id + '">' +
+              '<input type="text" class="mono qm-room-quickadd-input" placeholder="+ G2B 번호 입력 후 Enter">' +
+            '</span>' +
+          '</div>' +
+        '</td></tr>';
 
         if(codes.length === 0){
-          roomHtml += '<tr><td colspan="12" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
+          roomHtml += '<tr><td colspan="11" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
         } else {
           roomsWithItems++;
           codes.forEach(function(code){
@@ -2935,21 +3183,15 @@ function renderQuote(){
             var specVal = (room.specOverrides && room.specOverrides[code] !== undefined) ? room.specOverrides[code] : p.spec;
             var remarkVal = (room.remarks && room.remarks[code] !== undefined) ? room.remarks[code] : '';
             var discPctVal = (room.discountPct && room.discountPct[code]) ? room.discountPct[code] : 0;
-            var discAmtVal = Math.round(lineTotal * discPctVal / 100);
-            grandDiscount += discAmtVal;
             var selKey = room.id + '||' + code;
             var isSelected = selectedItemKeys.has(selKey);
             var canEditPrice = hasPermission('custom_price');
-            var pctVal = '';
-            if(room.priceOverrides && room.priceOverrides[code] !== undefined && p.price > 0){
-              pctVal = Math.round(((room.priceOverrides[code] / p.price) - 1) * 1000) / 10;
-            }
             var priceCellHtml = canEditPrice ?
-              '<span class="field-label">단가</span><div class="price-with-pct">' +
-                '<input class="price-input mono" type="number" min="0" value="' + priceVal + '">' +
-                '<input class="price-pct-input mono" type="number" step="1" placeholder="%" title="정가 대비 할인/할증율(%) — 예: -5 입력 시 정가의 5% 할인" value="' + pctVal + '">' +
-              '</div>' :
+              '<span class="field-label">단가</span><input class="price-input mono" type="number" min="0" value="' + priceVal + '">' :
               '<span class="field-label">단가</span><span class="field-value">' + fmt(priceVal) + '</span>';
+            var discPctCellHtml = canEditPrice ?
+              '<span class="field-label">증감율(%)</span><input class="discpct-input mono" type="number" step="0.5" placeholder="0" title="정가 대비 증감율(%) — 예: -5 입력 시 정가의 5% 할인" value="' + (discPctVal || '') + '">' :
+              '<span class="field-label">증감율(%)</span><span class="field-value">' + (discPctVal ? ((discPctVal > 0 ? '+' : '') + discPctVal + '%') : '-') + '</span>';
             roomHtml +=
               '<tr class="' + (isSelected ? 'row-selected' : '') + '" data-room-id="' + room.id + '" data-code="' + code + '">' +
                 '<td class="row-code">' + p.code + '</td>' +
@@ -2960,8 +3202,7 @@ function renderQuote(){
                 '<td class="row-qty"><span class="field-label">수량</span><input class="qty-input mono" type="number" min="1" value="' + qty + '"></td>' +
                 '<td class="row-price">' + priceCellHtml + '</td>' +
                 '<td class="row-total"><span class="field-label">총금액</span><span class="field-value row-total-amt">' + fmt(lineTotal) + '</span></td>' +
-                '<td class="row-discpct col-discpct"><span class="field-label">할인율(%)</span><input class="discpct-input mono" type="number" min="0" max="100" step="0.5" placeholder="0" value="' + (discPctVal || '') + '"></td>' +
-                '<td class="row-discamt col-discamt"><span class="field-label">할인금액</span><span class="field-value row-discamt-val">' + (discAmtVal > 0 ? '-' + fmt(discAmtVal) : fmt(0)) + '</span></td>' +
+                '<td class="row-discpct col-discpct">' + discPctCellHtml + '</td>' +
                 '<td class="row-g2b col-g2b"><span class="g2b-text">' + escHtml(p.g2b || '-') + '</span></td>' +
                 '<td class="row-remark col-remark"><span class="field-label">비고</span><textarea class="remark-input mono" placeholder="재질 등 메모를 직접 입력...">' + escHtml(remarkVal) + '</textarea>' +
                   '<span class="remark-print-text">' + escHtml(remarkVal).replace(/\n/g, '<br>') + '</span></td>' +
@@ -2969,19 +3210,19 @@ function renderQuote(){
               '</tr>';
           });
         }
-        roomHtml += '<tr class="subtot-room"><td colspan="12">' + escHtml(room.name) + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
+        roomHtml += '<tr class="subtot-room"><td colspan="11">' + escHtml(room.name) + ' 소계 &nbsp; ' + fmt(roomTotal) + '</td></tr>';
         floorTotal += roomTotal;
         floorHasRows = true;
         floorRoomsHtml += '<tbody class="room-group" data-room-id="' + room.id + '">' + roomHtml + '</tbody>';
       });
 
-      html += '<tbody><tr class="grp-floor"><td colspan="12">' + floor + '</td></tr></tbody>';
+      html += '<tbody><tr class="grp-floor"><td colspan="11">' + floor + '</td></tr></tbody>';
       html += floorRoomsHtml;
-      html += '<tbody><tr class="subtot-floor"><td colspan="12">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr></tbody>';
+      html += '<tbody><tr class="subtot-floor"><td colspan="11">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr></tbody>';
       grandTotal += floorTotal;
     });
 
-    html += '<tbody><tr class="grand-total"><td colspan="12">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr></tbody>';
+    html += '<tbody><tr class="grand-total"><td colspan="11">총 합계 &nbsp; ' + fmt(grandTotal) + '</td></tr></tbody>';
     html += '</table>';
     wrap.innerHTML = html;
 
@@ -3028,15 +3269,6 @@ function renderQuote(){
       inp.addEventListener('blur', commitPrice);
       inp.addEventListener('click', function(e){ e.stopPropagation(); });
     });
-    wrap.querySelectorAll('.price-pct-input').forEach(function(inp){
-      var row = inp.closest('tr');
-      var roomId = row.getAttribute('data-room-id');
-      var code = row.getAttribute('data-code');
-      function commitPct(){ setPricePercent(roomId, code, inp.value); }
-      inp.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ inp.blur(); } });
-      inp.addEventListener('blur', commitPct);
-      inp.addEventListener('click', function(e){ e.stopPropagation(); });
-    });
     wrap.querySelectorAll('.discpct-input').forEach(function(inp){
       var row = inp.closest('tr');
       var roomId = row.getAttribute('data-room-id');
@@ -3053,6 +3285,27 @@ function renderQuote(){
         var roomId = row.getAttribute('data-room-id');
         var code = row.getAttribute('data-code');
         if(roomId) removeItem(roomId, code);
+      });
+    });
+    // 공간별 G2B 번호 빠른 추가 — 각 공간(방) 헤더 행에서 바로 번호를 입력해 그 공간에만
+    // 담을 수 있습니다(기존 하단의 "현재 선택된 공간"에만 담기던 전역 빠른추가 입력창을
+    // 대체 — 어느 공간이 활성화되어 있는지 신경 쓸 필요 없이 원하는 공간 행에 바로 입력).
+    wrap.querySelectorAll('.qm-room-quickadd-input').forEach(function(inp){
+      var roomId = inp.closest('[data-room-quickadd]').getAttribute('data-room-quickadd');
+      inp.addEventListener('click', function(e){ e.stopPropagation(); });
+      inp.addEventListener('mousedown', function(e){ e.stopPropagation(); });
+      inp.addEventListener('keydown', function(e){
+        e.stopPropagation();
+        if(e.key !== 'Enter') return;
+        var val = inp.value.trim();
+        if(!val) return;
+        var p = PRODUCTS.filter(function(pp){ return pp.g2b === val; })[0] ||
+          PRODUCTS.filter(function(pp){ return pp.g2b.indexOf(val) > -1; })[0];
+        if(!p){
+          showToast('일치하는 G2B번호를 찾을 수 없습니다: ' + val);
+          return;
+        }
+        addToCartInRoom(roomId, p.code);
       });
     });
 
@@ -3164,6 +3417,21 @@ function renderQuote(){
   if(mbbCountEl) mbbCountEl.textContent = grandQty;
   if(mbbTotalEl) mbbTotalEl.textContent = fmt(grandTotal);
 
+  // 공급가액/부가세/합계 요약 박스 — 증감율(%)이 이미 단가(priceOverrides)에 반영되어 있으므로
+  // grandTotal 자체가 실제 공급가액입니다(별도로 한 번 더 차감하지 않습니다).
+  // 화면 전용 계산이며, 인쇄/PDF의 금액 계산과는 전혀 무관합니다.
+  var qmSupplyEl = document.getElementById('qmSummarySupply');
+  var qmVatEl = document.getElementById('qmSummaryVat');
+  var qmGrandEl = document.getElementById('qmSummaryGrand');
+  if(qmSupplyEl && qmVatEl && qmGrandEl){
+    var qmSupply = grandTotal;
+    var qmVat = Math.round(qmSupply * 0.1);
+    var qmGrand = qmSupply + qmVat;
+    qmSupplyEl.textContent = fmt(qmSupply);
+    qmVatEl.textContent = fmt(qmVat);
+    qmGrandEl.textContent = fmt(qmGrand);
+  }
+
   saveDraftState();
 }
 
@@ -3250,18 +3518,49 @@ Array.prototype.forEach.call(document.querySelectorAll('#viewModeGroup .draft-st
 // 독립적인 검색 상태를 씁니다(같은 화면에서 두 검색이 서로 간섭하지 않도록).
 var qmQuery = '';
 var qmCatFilter = null;
+// 인증 필터 — 카탈로그 모드의 state.certFilters(CERT_FILTERS 목록 재사용)와는 별개의
+// 독립적인 선택 상태입니다(같은 화면에서 두 모드의 필터가 서로 간섭하지 않도록).
+var qmCertFilters = [];
 
 function renderQmPanel(){
   renderQmSearchResults();
+  renderQmRecentList();
   renderQmCatList();
+  renderQmCertFilters();
 }
 
+function renderQmCertFilters(){
+  var bar = document.getElementById('qmCertFilterBar');
+  if(!bar) return;
+  bar.innerHTML = '';
+  CERT_FILTERS.forEach(function(cf){
+    var b = document.createElement('button');
+    var active = qmCertFilters.indexOf(cf.key) > -1;
+    b.className = 'sidebar-cert-btn' + (active ? ' active' : '');
+    b.innerHTML = '<span class="box">' + (active ? '✓' : '') + '</span><span>' + cf.key + '</span>';
+    b.onclick = function(){
+      var idx = qmCertFilters.indexOf(cf.key);
+      if(idx > -1){ qmCertFilters.splice(idx, 1); } else { qmCertFilters.push(cf.key); }
+      renderQmSearchResults();
+      renderQmCertFilters();
+    };
+    bar.appendChild(b);
+  });
+}
+
+// 제품이 많아질수록 품명/코드/G2B번호가 서로 뒤섞여 잘 안 보인다는 피드백에 따라,
+// G2B번호를 카드 맨 위에 배지로 항상 먼저 보여주고 코드는 배지 옆에 작게 병기합니다.
+// (기존에는 G2B검색 결과에만 배지를 별도로 붙였는데, 이제 모든 카드에 공통으로 적용합니다.)
 function qmProductCard(p, addLabel){
   var card = document.createElement('div');
   card.className = 'qm-result-card';
   card.innerHTML =
     '<div class="qm-result-thumb" data-thumb>' + IMG_ICON + '</div>' +
     '<div class="qm-result-info">' +
+      '<div class="qm-result-badges">' +
+        '<span class="qm-g2b-badge">G2B ' + escHtml(p.g2b || '-') + '</span>' +
+        '<span class="qm-code-text">' + escHtml(p.code) + '</span>' +
+      '</div>' +
       '<div class="qm-result-name">' + escHtml(p.name) + '</div>' +
       '<div class="qm-result-spec">' + escHtml(p.spec) + '</div>' +
       '<div class="qm-result-price">' + fmt(p.price) + '</div>' +
@@ -3270,6 +3569,32 @@ function qmProductCard(p, addLabel){
   card.querySelector('.qm-add-btn').addEventListener('click', function(){ addToCart(p.code); });
   fillThumbWithFallback(card.querySelector('[data-thumb]'), productImgCandidates(p));
   return card;
+}
+
+// 최근 검색/담기 목록 — 코드 · 품명 · 가격을 한 줄로 붙여넣기 쉽게 보여주고,
+// +버튼으로 바로 현재 선택된 공간에 담을 수 있습니다 (recentCodes는 addToCart() 시
+// pushRecent()로 갱신되는 기존 배열을 그대로 재사용합니다).
+function renderQmRecentList(){
+  var wrap = document.getElementById('qmRecentList');
+  if(!wrap) return;
+  if(!recentCodes.length){
+    wrap.innerHTML = '<div class="qm-empty">최근 담은 품목이 없습니다</div>';
+    return;
+  }
+  wrap.innerHTML = '';
+  recentCodes.forEach(function(code){
+    var p = findProduct(code);
+    if(!p) return;
+    var row = document.createElement('div');
+    row.className = 'qm-recent-row';
+    row.innerHTML =
+      '<span class="qm-recent-code mono">' + escHtml(p.code) + '</span>' +
+      '<span class="qm-recent-name">' + escHtml(p.name) + '</span>' +
+      '<span class="qm-recent-price mono">' + fmt(p.price) + '</span>' +
+      '<button type="button" class="qm-recent-add" title="담기">+</button>';
+    row.querySelector('.qm-recent-add').addEventListener('click', function(){ addToCart(p.code); });
+    wrap.appendChild(row);
+  });
 }
 
 function renderQmSearchResults(){
@@ -3282,7 +3607,12 @@ function renderQmSearchResults(){
     var matchQ = q === '' ||
       p.name.toLowerCase().indexOf(q) > -1 || p.code.toLowerCase().indexOf(q) > -1 ||
       p.g2b.toLowerCase().indexOf(q) > -1 || p.spec.toLowerCase().indexOf(q) > -1;
-    return matchCat && matchQ;
+    // 인증 필터는 여러 개 선택 시 교집합(AND) — 카탈로그 모드의 인증 필터와 동일한 규칙
+    var matchCert = qmCertFilters.every(function(key){
+      var cf = CERT_FILTERS.filter(function(c){ return c.key === key; })[0];
+      return cf ? cf.test(p) : true;
+    });
+    return matchCat && matchQ && matchCert;
   });
   if(!matched.length){ wrap.innerHTML = '<div class="qm-empty">검색 결과가 없습니다</div>'; return; }
   wrap.innerHTML = '';
@@ -3330,48 +3660,17 @@ if(qmSearchInputEl){
   });
 }
 
-function doQmG2bSearch(){
-  var inputEl = document.getElementById('qmG2bInput');
-  var resultWrap = document.getElementById('qmG2bResult');
-  if(!inputEl || !resultWrap) return;
-  var val = inputEl.value.trim();
-  if(!val){ resultWrap.innerHTML = ''; return; }
-  var matches = PRODUCTS.filter(function(p){ return p.g2b.indexOf(val) > -1; }).slice(0, 5);
-  if(!matches.length){ resultWrap.innerHTML = '<div class="qm-empty">일치하는 G2B번호가 없습니다</div>'; return; }
-  resultWrap.innerHTML = '';
-  matches.forEach(function(p){
-    var card = qmProductCard(p, '+ 견적서에 추가');
-    card.classList.add('qm-g2b-card');
-    var badge = document.createElement('span');
-    badge.className = 'qm-g2b-badge';
-    badge.textContent = 'G2B ' + p.g2b;
-    card.querySelector('.qm-result-info').insertBefore(badge, card.querySelector('.qm-result-name'));
-    resultWrap.appendChild(card);
+// 최근 검색/카테고리/인증 필터 — 접기·펼치기. 이 헤더(.qm-panel-title)와 목록 컨테이너는
+// 정적 HTML이라(renderQmPanel()이 매번 다시 그리는 건 목록 안쪽 내용뿐, 이 래퍼 자체는
+// 아님) 한 번만 연결하면 재렌더링 후에도 접힘 상태가 그대로 유지됩니다.
+document.querySelectorAll('.qm-collapsible[data-collapse-target]').forEach(function(header){
+  header.addEventListener('click', function(){
+    var targetEl = document.getElementById(header.getAttribute('data-collapse-target'));
+    if(!targetEl) return;
+    var collapsed = header.classList.toggle('collapsed');
+    targetEl.style.display = collapsed ? 'none' : '';
   });
-}
-var qmG2bSearchBtnEl = document.getElementById('qmG2bSearchBtn');
-var qmG2bInputEl = document.getElementById('qmG2bInput');
-if(qmG2bSearchBtnEl) qmG2bSearchBtnEl.addEventListener('click', doQmG2bSearch);
-if(qmG2bInputEl) qmG2bInputEl.addEventListener('keydown', function(e){ if(e.key === 'Enter') doQmG2bSearch(); });
-
-// G2B 번호 빠른 추가 — 번호 입력 후 Enter 한 번으로 바로 담깁니다 (검색 결과 확인 없이 즉시 추가).
-// 정확히 일치하는 G2B번호를 우선 찾고, 없으면 부분 일치(앞자리만 입력한 경우 등)로 한 번 더 찾습니다.
-var qmQuickAddInputEl = document.getElementById('qmQuickAddInput');
-if(qmQuickAddInputEl){
-  qmQuickAddInputEl.addEventListener('keydown', function(e){
-    if(e.key !== 'Enter') return;
-    var val = qmQuickAddInputEl.value.trim();
-    if(!val) return;
-    var p = PRODUCTS.filter(function(pp){ return pp.g2b === val; })[0] ||
-      PRODUCTS.filter(function(pp){ return pp.g2b.indexOf(val) > -1; })[0];
-    if(!p){
-      showToast('일치하는 G2B번호를 찾을 수 없습니다: ' + val);
-      return;
-    }
-    addToCart(p.code);
-    qmQuickAddInputEl.value = '';
-  });
-}
+});
 
 // 메모(내부용) — 새로고침해도 유지되도록 draft state에 함께 저장/복원합니다.
 var quoteMemoInputEl = document.getElementById('quoteMemoInput');
