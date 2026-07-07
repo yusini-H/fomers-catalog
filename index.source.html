@@ -110,9 +110,11 @@
     padding-left:16px;
   }
 
+  /* 현장명/담당자/연락처/버튼들이 모여 있는 상단 바 — 예전보다 전체적으로 작고 압축된
+     크기로 줄였습니다(패딩·폰트·입력칸 높이를 전반적으로 축소). */
   .spacebar{
     background:var(--paper);
-    padding:20px 28px;
+    padding:12px 20px;
   }
   /* 스크롤해도 현장명/공간목록 컨트롤 바가 항상 보이도록 데스크톱에서 상단 고정.
      모바일(<=640px)은 별도의 #mobileStickyBar가 이미 동일한 역할을 하므로 여기서는 제외합니다. */
@@ -126,21 +128,21 @@
   }
   .spacebar-panel{
     background:var(--surface);
-    border-radius:14px;
+    border-radius:12px;
     box-shadow:0 4px 20px rgba(17,24,39,.08);
-    padding:18px 20px;
+    padding:11px 14px;
   }
   .spacebar-row{
     display:flex;
-    gap:14px;
+    gap:10px;
     align-items:center;
-    margin-bottom:16px;
+    margin-bottom:10px;
     flex-wrap:wrap;
   }
-  .spacebar .field{display:flex;flex-direction:column;gap:4px;}
+  .spacebar .field{display:flex;flex-direction:column;gap:2px;}
   .spacebar .field label{
     font-family:'IBM Plex Mono',monospace;
-    font-size:10.5px;
+    font-size:9.5px;
     font-weight:700;
     color:var(--ink-3);
     letter-spacing:.02em;
@@ -148,20 +150,20 @@
   }
   .spacebar .field input[type=text]{
     font-family:'IBM Plex Mono',monospace;
-    font-size:13px;
+    font-size:12px;
     color:var(--ink);
     border:1px solid var(--line);
-    border-radius:8px;
-    padding:9px 12px;
+    border-radius:7px;
+    padding:6px 10px;
     background:#FBFCFD;
     outline:none;
   }
   .spacebar .field input[type=text]:focus{border-color:var(--teal);background:#fff;}
   .spacebar .field.site{flex:1;min-width:220px;}
-  .spacebar .field.site input{width:100%;font-size:14px;font-weight:600;}
-  .spacebar .field.mgr input{width:120px;}
-  .spacebar .field.phone input{width:150px;}
-  .manager-fields{display:flex;gap:14px;flex-wrap:wrap;}
+  .spacebar .field.site input{width:100%;font-size:12.5px;font-weight:600;}
+  .spacebar .field.mgr input{width:105px;}
+  .spacebar .field.phone input{width:130px;}
+  .manager-fields{display:flex;gap:10px;flex-wrap:wrap;}
 
   /* 로그인한 직원(영업자/관리매니저)은 이름·연락처가 이미 프로필에 등록되어 있으므로
      별도 입력칸 대신 요약 배지로 보여주고, "변경"을 누르면 직접 입력으로 전환할 수 있습니다. */
@@ -186,10 +188,10 @@
     text-decoration:underline;cursor:pointer;margin-left:4px;
   }
 
-  .draft-stage-group{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto;}
+  .draft-stage-group{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-left:auto;}
   .draft-stage-btn{
-    font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
-    padding:6px 12px;border-radius:16px;border:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;
+    padding:5px 10px;border-radius:14px;border:1px solid var(--line);
     background:var(--surface);color:var(--ink-3);cursor:pointer;
   }
   .draft-stage-btn.active{background:var(--teal);border-color:var(--teal);color:#fff;}
@@ -325,7 +327,6 @@
     .add-room-form input.roomname{ flex:1.4 1 auto; }
     .add-room-btn{ width:100%; }
     .qm-bottom-row{ flex-direction:column; }
-    .qm-summary-box{ min-width:0; }
   }
 
   .layout{
@@ -431,7 +432,18 @@
     font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-3);margin-bottom:9px;
   }
   .qm-room-switcher-label b{ color:var(--ink);font-size:15px;font-weight:700; }
-  .qm-room-tabs{ display:flex;flex-wrap:wrap;gap:8px;align-items:center; }
+  /* 공간이 많아지면 줄바꿈되어 세로로 길어지는 대신, 한 줄로 유지하고 좌우로 스크롤해서
+     볼 수 있게 했습니다(공간 탭이 많을 때 화면을 세로로 많이 차지하지 않도록).
+     overflow-x:auto만으로는 스크롤바 드래그·휠·터치 스와이프만 가능하고 마우스로 직접
+     끌어서(click-and-drag) 스크롤하는 건 안 되므로, 아래 JS(qmRoomTabs 드래그 스크롤)로
+     보완합니다 — cursor:grab/grabbing은 그 드래그가 가능하다는 시각적 신호입니다. */
+  .qm-room-tabs{
+    display:flex;flex-wrap:nowrap;gap:8px;align-items:center;
+    overflow-x:auto;overflow-y:hidden;padding-bottom:4px;-webkit-overflow-scrolling:touch;
+    cursor:grab;
+  }
+  .qm-room-tabs.qm-dragging{ cursor:grabbing;user-select:none; }
+  .qm-room-tabs > *{ flex:none; }
   .qm-room-tab{
     display:flex;align-items:center;gap:7px;
     font-family:'IBM Plex Sans KR',sans-serif;font-size:13px;font-weight:600;
@@ -511,11 +523,13 @@
     font-size:11.5px;color:var(--ink-3);text-align:center;padding:12px 6px;
   }
   /* 카드를 크게 키워 한 화면에 1~2개만 보이더라도(나머지는 스크롤) 품명/규격/가격이
-     확실히 눈에 잘 들어오도록 했습니다 — 사이드바가 넓어진 만큼 그 공간을 실제로 씁니다. */
+     확실히 눈에 잘 들어오도록 했습니다 — 사이드바가 넓어진 만큼 그 공간을 실제로 씁니다.
+     + 추가 버튼은 카드 맨 아래에 전체 너비로 배치합니다(세로 스택 레이아웃). */
   .qm-result-card{
-    display:flex;align-items:center;gap:14px;
+    display:flex;flex-direction:column;gap:12px;
     border:1.5px solid var(--line);border-radius:12px;padding:16px;background:#fff;
   }
+  .qm-result-top{ display:flex;align-items:flex-start;gap:14px; }
   .qm-result-thumb{
     width:92px;height:92px;flex:none;border-radius:10px;
     background:linear-gradient(135deg,#EDF2F6,#DCE6EE);
@@ -524,11 +538,10 @@
   .qm-result-thumb svg{width:38px;height:38px;}
   .qm-result-thumb img{width:100%;height:100%;object-fit:cover;}
   .qm-result-info{flex:1;min-width:0;}
-  /* 제품이 많아질수록 품명/코드/G2B번호가 서로 헷갈린다는 피드백 반영 — G2B번호를 배지로
-     맨 위에 항상 먼저 보여주고, 코드는 그 옆에 작게 병기, 품명은 잘리지 않도록 줄바꿈 허용 */
-  .qm-result-badges{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-  .qm-code-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);}
-  .qm-result-name{font-size:16px;font-weight:700;color:var(--ink);line-height:1.4;}
+  /* 제품이 많아질수록 품명/코드/G2B번호가 서로 헷갈린다는 피드백 반영 — G2B번호 배지 →
+     품명 → 코드 → 규격 → 가격 순으로 위에서 아래로 쌓아 보여줍니다. */
+  .qm-code-text{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);display:block;margin-top:3px;}
+  .qm-result-name{font-size:16px;font-weight:700;color:var(--ink);line-height:1.4;margin-top:5px;}
   .qm-result-spec{font-size:12.5px;color:var(--ink-3);margin-top:3px;}
   .qm-result-price{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;color:var(--teal-dark);margin-top:5px;}
   .qm-g2b-badge{
@@ -536,7 +549,7 @@
     color:var(--teal-dark);background:var(--teal-light);padding:3px 9px;border-radius:9px;
   }
   .qm-add-btn{
-    flex:none;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;
+    width:100%;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;
     color:#fff;background:var(--teal);border:none;border-radius:8px;padding:10px 14px;cursor:pointer;white-space:nowrap;
   }
   .qm-add-btn:hover{background:var(--teal-dark);}
@@ -571,13 +584,21 @@
   .qm-help-box ul{margin:0;padding-left:16px;}
   .qm-help-box li{font-size:11px;color:var(--ink-3);line-height:1.6;}
 
-  /* 공급가액/부가세/합계 요약 — 오른쪽 정렬 한 줄 (예전엔 왼쪽에 전역 G2B 빠른추가가 나란히
-     있었지만, 공간별 빠른추가로 대체되어 이 줄에는 요약 박스만 남습니다) */
+  /* 공간 수/총 수량/총 합계 — 예전엔 표 위(.quote-head)에 있었지만 화면 아래쪽으로
+     옮겨졌습니다. 공급가액/부가세/합계 요약 박스는 제거되어 이 줄에는 통계만 남습니다. */
   .qm-bottom-row{ display:flex; gap:14px; align-items:stretch; margin-top:12px; justify-content:flex-end; }
 
-  /* 공간(방)별 G2B 번호 빠른 추가 — 표의 각 공간 헤더 행 안, 방 이름 오른쪽에 붙는 작은 입력창.
-     특정 "선택된 공간" 개념 없이, 원하는 공간의 행에서 바로 번호를 입력하면 그 공간에 담깁니다. */
+  /* 공간(방)별 G2B 번호 빠른 추가 — 표의 각 공간 헤더 행 안, "층 / 실명" 표시 오른쪽에 붙는
+     작은 입력창. 특정 "선택된 공간" 개념 없이, 원하는 공간의 행에서 바로 번호를 입력하면
+     그 공간에 담깁니다. 예전에는 층 구분바(짙은색)와 실 이름바(옅은색)가 따로 두 줄로
+     나뉘어 있었지만, 한 줄("3층 / 교무실")로 병합했습니다 — 그래서 이 행 안에 층/실명
+     수정(✎) 버튼도 함께 넣어, 표 안에서 바로 이름을 고칠 수 있게 했습니다. */
   .qm-room-row-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .qm-room-row-name{ display:flex; align-items:baseline; gap:6px; }
+  .qm-room-row-edit{
+    opacity:.55; font-size:12px; cursor:pointer; flex:0 0 auto; padding:2px 4px; border-radius:4px;
+  }
+  .qm-room-row-edit:hover{ opacity:1; background:#fff; }
   .qm-room-quickadd{
     display:flex;align-items:center;gap:6px;flex:0 0 auto;
     border:1.5px dashed var(--ink-3);border-radius:6px;padding:4px 8px;background:#fff;
@@ -590,29 +611,20 @@
   .qm-room-quickadd:focus-within{ border-color:var(--teal);border-style:solid; }
   tr.grp-room[data-room-id]:hover .qm-room-quickadd{ background:#fff; }
 
+  /* 표 안(공간 헤더 행)에서 층/실명을 바로 수정하는 편집 모드 — 왼쪽 room-tabs 바의
+     ✎ 편집 UI(.qm-room-tab-edit* 클래스)와 동일한 시각 언어를 그대로 재사용합니다. */
+  .qm-room-row-editfields{ display:flex; align-items:center; gap:5px; }
+  .qm-room-row-sep{ color:var(--ink-3); font-weight:600; }
+  /* 편집모드 중 인쇄(.no-print로 입력칸이 사라짐)를 대비한 대체 텍스트 — 화면에서는 숨기고
+     인쇄에서만 보이게 합니다(편집 UI 자체가 화면 전용이므로 평소에는 절대 보이지 않습니다). */
+  @media screen{ .qm-room-row-name.print-only-inline{ display:none; } }
+
   /* 좌측 패널(최근 검색/카테고리/인증 필터) 접기·펼치기 토글 — 대상 표시/숨김은 JS에서
      직접 style.display를 바꿔 처리하므로(대상 엘리먼트가 항상 바로 다음 형제라는 가정이
      불필요), 여기서는 아이콘 회전만 담당합니다. */
   .qm-panel-title.qm-collapsible{ cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none; }
   .qm-collapse-icon{ font-size:10px;color:var(--ink-3);transition:transform .15s; }
   .qm-panel-title.qm-collapsible.collapsed .qm-collapse-icon{ transform:rotate(-90deg); }
-
-  /* 공급가액/부가세/합계 요약 박스 — 화면 전용(no-print). 표에 이미 입력된 할인율을 반영한
-     공급가액을 보여줍니다. 인쇄/PDF 출력물의 금액 표기·열 구성과는 완전히 무관합니다
-     (그쪽은 항상 기존 그대로 유지됩니다). */
-  .qm-summary-box{
-    min-width:230px;background:#fff;border:1.5px solid var(--line);border-radius:8px;
-    padding:10px 18px;display:flex;flex-direction:column;justify-content:center;gap:5px;
-  }
-  .qm-summary-line{
-    display:flex;justify-content:space-between;gap:14px;
-    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-3);
-  }
-  .qm-summary-line span:last-child{ font-weight:700;color:var(--ink); }
-  .qm-summary-grand{
-    border-top:1px solid var(--line);margin-top:3px;padding-top:6px;font-size:14px;
-  }
-  .qm-summary-grand span:last-child{ color:var(--teal-dark);font-weight:800;font-size:15.5px; }
 
   /* 메모 — .layout-right(#printArea) 안, 화면 전용 */
   .qm-memo-box{ margin-top:16px; }
@@ -1347,8 +1359,8 @@
   .pagination button:not(:disabled):hover{background:var(--teal);color:#fff;border-color:var(--teal);}
 
   .print-btn{
-    font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;
-    padding:8px 14px;background:var(--teal);color:#EFF7F4;border:none;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;
+    padding:6px 12px;background:var(--teal);color:#EFF7F4;border:none;cursor:pointer;
   }
   .print-btn:hover{background:var(--teal-dark);}
   .print-btn-top{
@@ -1543,27 +1555,38 @@
     .qcol-price{ width:10%; }
     .qcol-total{ width:12%; }
     .qcol-g2b{ width:10%; }
+    /* [G2B 잘림 버그 근본 수정 #2] 아래 세 칸(삭제/비고/증감율)을 예전에는 display:none으로
+       숨겼는데, display:none은 그 셀을 표의 "열 순서"에서 완전히 제거해버립니다 — 그 결과
+       바로 뒤에 오는 형제 셀들이 한 칸씩 왼쪽으로 밀리면서 엉뚱한 <col> 너비를 이어받는
+       버그가 있었습니다(증감율 칸이 숨겨지면서 G2B 칸이 증감율 칸의 폭(0)을 이어받아
+       G2B 번호가 통째로 안 보이던 원인이 바로 이것입니다). 그래서 이제는 display:none
+       대신 display:table-cell을 유지하면서 폭/패딩만 0으로 줄이고 overflow:hidden으로
+       내용을 감춥니다 — 열 순서(colgroup 매핑)가 절대 깨지지 않습니다. */
     .qcol-remove{ width:0; }
-    .row-remove-cell{ display:none !important; padding:0 !important; width:0 !important; }
+    .row-remove-cell{ display:table-cell !important; padding:0 !important; width:0 !important; overflow:hidden !important; }
     /* 비고(재질 수기메모) 칸은 견적서 인쇄에는 나오지 않습니다(기존 견적서 포맷을 그대로
        유지하라는 요청 — 열 비율 10/12/22/18/6/10/12/10%는 손대지 않습니다). 발주서 모드
-       (body.doctype-po)에서만 아래쪽에서 폭을 되살립니다. remove 칸과 동일한 패턴으로
-       "width:0 + display:none"을 같이 써서, colspan(소계/합계 행)이 가리키는 열 개수 자체는
-       바뀌지 않게 합니다. */
+       (body.doctype-po)에서만 아래쪽에서 폭을 되살립니다. */
     .qcol-remark{ width:0; }
-    .row-remark{ display:none !important; padding:0 !important; width:0 !important; }
-    .col-remark{ display:none !important; }
+    .row-remark{ display:table-cell !important; padding:0 !important; width:0 !important; overflow:hidden !important; }
+    .col-remark{ display:table-cell !important; padding:0 !important; width:0 !important; overflow:hidden !important; }
     /* 증감율(%) 칸 — 견적서 모드 화면 전용. 발주서(body.doctype-po)에도 예외를
        두지 않습니다 — "증감율은 절대 인쇄에 넣지 않는다"는 요구사항이 그대로 유지됩니다. */
     .qcol-discpct{ width:0; }
-    .row-discpct{ display:none !important; padding:0 !important; width:0 !important; }
-    .col-discpct{ display:none !important; }
+    .row-discpct{ display:table-cell !important; padding:0 !important; width:0 !important; overflow:hidden !important; }
+    .col-discpct{ display:table-cell !important; padding:0 !important; width:0 !important; overflow:hidden !important; }
 
-    /* 셀 공통 스타일 — 폰트 Pretendard, 본문 11pt, 지정된 여백/줄간격 그대로 적용 */
+    /* 셀 공통 스타일 — 폰트 Pretendard, 본문 8pt(공급자 정보 카드의 11px≈8.25pt와 동일한
+       수준으로 더 축소 — 총금액/G2B 등 숫자 칸에서 글자가 옆 칸을 침범하던 문제의 안전
+       마진을 넉넉히 확보하기 위함). 소계/합계 행만 예외로 더 크게 강조(아래 별도 규칙).
+       또한 옆 칸 침범을 원천 차단하기 위해 overflow:hidden을 기본값으로 둡니다 — 표
+       자체(table.qtable)는 G2B 축소 스크립트를 위해 여전히 overflow:visible이지만,
+       각 셀(td) 단위로는 넘치는 내용이 보이지 않게 잘라 절대 옆 칸과 겹치지 않습니다. */
     table.qtable td{
       font-family:'Pretendard','IBM Plex Sans KR',sans-serif;
-      font-size:11pt; line-height:1.6; vertical-align:middle;
-      padding-top:8px; padding-bottom:8px; padding-left:6px; padding-right:6px;
+      font-size:8pt; line-height:1.55; vertical-align:middle;
+      padding-top:7px; padding-bottom:7px; padding-left:5px; padding-right:5px;
+      overflow:hidden;
     }
     table.qtable thead th{
       font-family:'Pretendard','IBM Plex Sans KR',sans-serif;
@@ -1584,15 +1607,19 @@
     /* 숫자 정렬 규칙 — 수량 가운데 · 단가 우측 · 금액 우측 · G2B 가운데 */
     .row-qty{ text-align:center !important; }
     .qty-input{ text-align:center !important; }
-    .row-price{ text-align:right !important; padding-left:10px !important; }
+    .row-price{ text-align:right !important; padding-left:8px !important; overflow:hidden; }
     .price-input{ text-align:right !important; }
-    .row-total{ text-align:right !important; padding-left:12px !important; }
+    .row-total{ text-align:right !important; padding-left:9px !important; overflow:hidden; }
+    /* 단가/총금액 글자 자체도 다른 칸과 동일한 8pt로 명시적으로 강제합니다 — 이 클래스들은
+       인쇄 스코프 밖(화면용 기본 CSS)에도 더 큰 font-size 규칙이 있어, 만약 그쪽이 더 높은
+       우선순위로 적용되면 옆 칸(G2B)을 침범하는 원인이 될 수 있으므로 여기서 확실히 못박습니다. */
+    .row-total-amt, .row-price .field-value, .row-total .field-value{ font-size:8pt !important; }
     .row-g2b{
       /* G2B 번호가 "완벽하게" 다 보이도록, 압축(scaleX)에 의존하기 전에 기본 폰트
-         크기 자체를 11pt→9pt로 줄여 실제 필요폭을 미리 줄여둡니다. 압축 로직은
-         그대로 안전장치로 남겨두되, 대부분의 실제 G2B 값은 이 기본 크기만으로도
-         전혀 압축 없이 한 줄에 들어가게 됩니다. */
-      font-size:9pt; text-align:center !important;
+         크기 자체를 다른 칸들과 동일하게(8pt) 맞춰 실제 필요폭을 미리 줄여둡니다.
+         압축 로직은 그대로 안전장치로 남겨두되, 대부분의 실제 G2B 값은 이 기본
+         크기만으로도 전혀 압축 없이 한 줄에 들어가게 됩니다. */
+      font-size:8pt; text-align:center !important;
       white-space:nowrap; overflow:hidden; /* 줄바꿈 금지 — 넘치면 JS(shrinkG2BCellsForPrint)가 자동 축소 */
       padding-left:3px !important; padding-right:3px !important; /* G2B 칸은 숫자 전용이라 좌우 여백을 좁혀 실 사용폭을 넓힙니다 */
     }
@@ -1603,11 +1630,11 @@
 
     .row-code{
       white-space:normal; word-break:break-all; line-height:1.25;
-      font-size:8px; padding:2px 4px; border-radius:4px;
+      font-size:8pt; padding:2px 4px; border-radius:4px;
     }
     /* 품목명 — 자동 줄바꿈(단어/공백 경계 우선, 그래도 안 되면 강제 줄바꿈으로 넘침 방지).
-       기본 11pt(table.qtable td 상속)에서 10pt로 살짝 줄여 규격/G2B 칸과 균형을 맞춥니다. */
-    .row-name{ overflow-wrap:break-word; word-break:keep-all; white-space:normal; font-size:10pt; }
+       코드/규격/G2B 등 다른 칸과 동일하게 8pt로 통일합니다. */
+    .row-name{ overflow-wrap:break-word; word-break:keep-all; white-space:normal; font-size:8pt; }
     /* 규격은 화면에서 쓰던 input을 인쇄에서는 숨기고, 줄바꿈 가능한 텍스트로 바꿔 보여줍니다
        (input의 value 텍스트는 CSS로 줄바꿈시킬 수 없어 길면 그대로 잘려 보였습니다).
        "6000×400×2200mm"가 "2200m / m"처럼 숫자+단위 중간에서 갈라지던 문제는 CSS
@@ -1617,8 +1644,8 @@
     .row-spec{ overflow-wrap:break-word; word-break:keep-all; white-space:normal; }
     .row-spec .spec-input{ display:none; }
     .row-spec .spec-print-text{
-      display:block; font-family:'IBM Plex Mono',monospace; font-size:10.5pt;
-      color:var(--ink-3); line-height:1.6;
+      display:block; font-family:'IBM Plex Mono',monospace; font-size:8pt;
+      color:var(--ink-3); line-height:1.5;
     }
 
     /* 인쇄용으로 확대한 64px 썸네일이 좁은 칸 밖으로 튀어나와 옆 칸(코드/규격) 글씨와
@@ -1935,27 +1962,19 @@
 
       <div class="quote-head">
         <h2>공간별 견적서</h2>
-        <div class="quote-stats">
-          <div class="stat"><b id="statRooms">0</b><span>공간 수</span></div>
-          <div class="stat"><b id="statQty">0</b><span>총 수량</span></div>
-          <div class="stat stat-em"><b id="statTotal">0원</b><span>총 합계</span></div>
-        </div>
-        <button class="print-btn no-print" id="printBtn" type="button">인쇄 / PDF 저장</button>
       </div>
 
       <p class="drag-hint no-print" id="dragHint">✓ 품목을 클릭해 선택한 뒤, 원하는 공간으로 드래그하거나 목록을 스크롤해서 해당 공간 이름을 클릭하면 이동/복사됩니다 — 같은 층은 이동, 다른 층은 복사됩니다 (Ctrl로 반대 동작)</p>
       <div id="quoteWrap"></div>
 
-      <!-- 공급가액/부가세/합계 요약 — #quoteWrap 밖의 별도 요소라 renderQuote()가 다시 그릴
-           때마다 입력 중이던 값이나 포커스가 사라지지 않습니다. G2B 번호 빠른추가는 이제
-           표 안 각 공간(방) 헤더 행에서 바로 입력하도록 옮겨졌습니다(전역 입력창 제거).
-           요약 박스는 화면 전용(no-print)이며, 표에 이미 반영된 증감율을 포함한 실제
-           공급가액을 보여줍니다 — 인쇄/PDF 출력물에는 기존과 동일하게 전혀 나타나지 않습니다. -->
+      <!-- 공간 수/총 수량/총 합계 — 예전엔 표 위(.quote-head)에 있었지만 화면 아래쪽으로
+           옮겨졌습니다. 공급가액/부가세/합계 요약 박스(qmSummaryBox)는 제거되었습니다 —
+           같은 정보를 두 번 보여줄 필요가 없다는 피드백을 반영했습니다. -->
       <div class="qm-bottom-row">
-        <div class="qm-summary-box no-print" id="qmSummaryBox">
-          <div class="qm-summary-line"><span>공급가액</span><span id="qmSummarySupply">0원</span></div>
-          <div class="qm-summary-line"><span>부가세(10%)</span><span id="qmSummaryVat">0원</span></div>
-          <div class="qm-summary-line qm-summary-grand"><span>합계</span><span id="qmSummaryGrand">0원</span></div>
+        <div class="quote-stats">
+          <div class="stat"><b id="statRooms">0</b><span>공간 수</span></div>
+          <div class="stat"><b id="statQty">0</b><span>총 수량</span></div>
+          <div class="stat stat-em"><b id="statTotal">0원</b><span>총 합계</span></div>
         </div>
       </div>
 
@@ -2321,18 +2340,29 @@ function getOrderedCodes(room){
   codes.forEach(function(c){ if(room.itemOrder.indexOf(c) === -1) room.itemOrder.push(c); });
   return room.itemOrder;
 }
-function reorderItemInRoom(roomId, code, targetCode, insertAfter){
+// 여러 품목을 한꺼번에 선택한 뒤에도 순서(위치) 변경이 되도록, 단일 품목용이던
+// reorderItemInRoom을 codes 배열을 받는 형태로 일반화했습니다. 단일 품목 드래그는
+// codes=[code] 하나짜리 배열로 호출하면 기존과 동일하게 동작합니다.
+// 이동 대상(targetCode) 자체가 옮기려는 codes 안에 포함된 경우(선택된 품목 중 하나 위에
+// 드롭한 경우)는 기준점이 모호해지므로 아무 것도 하지 않습니다 — 호출부(드롭 핸들러)에서
+// 이미 이 상황을 걸러내지만, 함수 자체도 안전하게 한 번 더 확인합니다.
+function reorderItemsInRoom(roomId, codes, targetCode, insertAfter){
   var room = findRoom(roomId);
   if(!room) return;
+  if(!codes || !codes.length) return;
+  if(codes.indexOf(targetCode) !== -1) return;
   var order = getOrderedCodes(room).slice();
-  var fromIdx = order.indexOf(code);
-  if(fromIdx === -1) return;
-  order.splice(fromIdx, 1);
-  var toIdx = order.indexOf(targetCode);
-  if(toIdx === -1) toIdx = order.length;
+  var movingSet = {};
+  codes.forEach(function(c){ movingSet[c] = true; });
+  // 선택한 순서(Set 삽입 순서)가 아니라, 원래 표에 보이던 순서 그대로 묶어서 이동시켜야
+  // 여러 개를 옮겨도 서로의 상대적 순서가 그대로 유지됩니다.
+  var movingInOrder = order.filter(function(c){ return movingSet[c]; });
+  if(!movingInOrder.length) return;
+  var remaining = order.filter(function(c){ return !movingSet[c]; });
+  var toIdx = remaining.indexOf(targetCode);
+  if(toIdx === -1) toIdx = remaining.length;
   else if(insertAfter) toIdx += 1;
-  order.splice(toIdx, 0, code);
-  room.itemOrder = order;
+  room.itemOrder = remaining.slice(0, toIdx).concat(movingInOrder, remaining.slice(toIdx));
   renderQuote();
 }
 function roomIndexOf(id){
@@ -3160,14 +3190,31 @@ function renderQuote(){
       state.rooms.filter(function(r){ return r.floor === floor; }).forEach(function(room){
         var codes = getOrderedCodes(room);
         var roomTotal = 0;
-        var roomHtml = '<tr class="grp-room" data-room-id="' + room.id + '"><td colspan="11">' +
+        var isEditingRoom = editingRoomId === room.id;
+        // 예전에는 "층" 구분바와 "실명" 구분바가 두 줄로 따로 있었는데, 요청에 따라 한 줄
+        // ("3층 / 교무실")로 병합했습니다. 이 행 안에서 바로 층/실명을 수정할 수도 있게
+        // 하되(✎ 클릭 → editingRoomId 설정 → 재렌더), 실제 저장 로직은 왼쪽 room-tabs의
+        // ✎ 편집과 동일한 saveRoomEdit()를 그대로 재사용해 두 곳의 동작이 어긋나지 않습니다.
+        var roomHeadHtml = isEditingRoom ?
           '<div class="qm-room-row-head">' +
-            '<span class="qm-room-row-name">' + escHtml(room.name) + '</span>' +
+            '<span class="qm-room-row-editfields no-print">' +
+              '<input type="text" class="qm-room-tab-editfloor mono qm-row-editfloor" value="' + room.floor.replace(/"/g,'&quot;') + '" placeholder="층">' +
+              '<span class="qm-room-row-sep">/</span>' +
+              '<input type="text" class="qm-room-tab-editname mono qm-row-editname" value="' + room.name.replace(/"/g,'&quot;') + '" placeholder="실명">' +
+              '<button type="button" class="qm-room-tab-editsave qm-row-editsave" title="저장">✓</button>' +
+              '<button type="button" class="qm-room-tab-editcancel qm-row-editcancel" title="취소">✕</button>' +
+            '</span>' +
+            '<span class="qm-room-row-name print-only-inline">' + escHtml(room.floor) + ' / ' + escHtml(room.name) + '</span>' +
+          '</div>' :
+          '<div class="qm-room-row-head">' +
+            '<span class="qm-room-row-name">' + escHtml(room.floor) + ' / ' + escHtml(room.name) +
+              '<span class="qm-room-row-edit no-print" title="층/실명 수정" data-room-edit="' + room.id + '">✎</span>' +
+            '</span>' +
             '<span class="qm-room-quickadd no-print" data-room-quickadd="' + room.id + '">' +
               '<input type="text" class="mono qm-room-quickadd-input" placeholder="+ G2B 번호 입력 후 Enter">' +
             '</span>' +
-          '</div>' +
-        '</td></tr>';
+          '</div>';
+        var roomHtml = '<tr class="grp-room' + (isEditingRoom ? ' editing' : '') + '" data-room-id="' + room.id + '"><td colspan="11">' + roomHeadHtml + '</td></tr>';
 
         if(codes.length === 0){
           roomHtml += '<tr><td colspan="11" style="color:var(--ink-3);font-size:12px;padding:8px;">담긴 품목 없음</td></tr>';
@@ -3216,7 +3263,8 @@ function renderQuote(){
         floorRoomsHtml += '<tbody class="room-group" data-room-id="' + room.id + '">' + roomHtml + '</tbody>';
       });
 
-      html += '<tbody><tr class="grp-floor"><td colspan="11">' + floor + '</td></tr></tbody>';
+      // 예전에는 여기서 층 구분바(<tr class="grp-floor">)를 따로 한 번 찍었지만, 이제
+      // 층 이름이 각 공간 행 안("층 / 실명")에 병합되어 들어가므로 별도 줄이 필요 없습니다.
       html += floorRoomsHtml;
       html += '<tbody><tr class="subtot-floor"><td colspan="11">' + floor + ' 합계 &nbsp; ' + fmt(floorTotal) + '</td></tr></tbody>';
       grandTotal += floorTotal;
@@ -3309,6 +3357,34 @@ function renderQuote(){
       });
     });
 
+    // 층/실명 병합행 안에서 바로 수정 — ✎ 클릭 시 편집모드로 전환(재렌더), 저장/취소는
+    // 왼쪽 room-tabs의 ✎ 편집과 동일한 saveRoomEdit()를 그대로 재사용합니다.
+    wrap.querySelectorAll('.qm-room-row-edit').forEach(function(icon){
+      icon.addEventListener('click', function(e){
+        e.stopPropagation();
+        editingRoomId = icon.getAttribute('data-room-edit');
+        renderQuote();
+      });
+    });
+    wrap.querySelectorAll('tr.grp-room.editing').forEach(function(tr){
+      var roomId = tr.getAttribute('data-room-id');
+      var floorInp = tr.querySelector('.qm-row-editfloor');
+      var nameInp = tr.querySelector('.qm-row-editname');
+      function commitRowEdit(){ saveRoomEdit(roomId, floorInp.value, nameInp.value); }
+      function cancelRowEdit(){ editingRoomId = null; renderQuote(); }
+      tr.querySelector('.qm-row-editsave').addEventListener('click', function(e){ e.stopPropagation(); commitRowEdit(); });
+      tr.querySelector('.qm-row-editcancel').addEventListener('click', function(e){ e.stopPropagation(); cancelRowEdit(); });
+      [floorInp, nameInp].forEach(function(inp){
+        inp.addEventListener('click', function(e){ e.stopPropagation(); });
+        inp.addEventListener('mousedown', function(e){ e.stopPropagation(); });
+        inp.addEventListener('keydown', function(e){
+          e.stopPropagation();
+          if(e.key === 'Enter') commitRowEdit();
+          if(e.key === 'Escape') cancelRowEdit();
+        });
+      });
+    });
+
     // 5. 품목 선택 — 행을 클릭하면 선택/해제 토글 (체크박스 대신, PC 드래그앤드롭의 다중선택 트리거)
     wrap.querySelectorAll('tr[data-room-id][data-code]').forEach(function(row){
       row.addEventListener('click', function(){
@@ -3323,8 +3399,11 @@ function renderQuote(){
     //      (같은 층=이동, 다른 층=복사, Ctrl 클릭 시 반대로 동작 — 드래그와 동일한 규칙)
     wrap.querySelectorAll('tr.grp-room[data-room-id]').forEach(function(tr){
       tr.addEventListener('click', function(e){
-        if(!selectedItemKeys.size) return;
         var targetRoomId = tr.getAttribute('data-room-id');
+        // 편집모드(층/실명 수정 중)인 행에서는 입력칸 바깥 여백을 클릭해도 "선택된 품목을
+        // 이 공간으로 이동" 동작이 함께 실행되면 안 되므로 건너뜁니다.
+        if(editingRoomId === targetRoomId) return;
+        if(!selectedItemKeys.size) return;
         moveOrCopyItemKeysToRoom(Array.from(selectedItemKeys), targetRoomId, e.ctrlKey);
       });
     });
@@ -3342,15 +3421,23 @@ function renderQuote(){
           row.classList.remove('row-dragging');
           currentDragKeys = null;
         });
-        // 같은 공간 안에서 품목 하나를 다른 품목 행 위로 끌어다 놓으면 순서를 바꿉니다.
-        // (여러 개를 선택해 끌 때는 순서변경 대신 기존의 이동/복사 동작을 그대로 따릅니다.)
-        row.addEventListener('dragover', function(e){
-          if(!currentDragKeys || currentDragKeys.length !== 1) return;
-          var sep = currentDragKeys[0].indexOf('||');
-          var dragRoomId = currentDragKeys[0].slice(0, sep), dragCode = currentDragKeys[0].slice(sep + 2);
+        // 같은 공간 안에서 품목(하나 또는 여러 개 선택)을 다른 품목 행 위로 끌어다 놓으면
+        // 순서를 바꿉니다. 여러 개를 선택해 끌 때는 그 중 "이 행과 같은 공간"에 속한
+        // 품목들만 골라 한꺼번에 순서를 옮기고(서로의 상대 순서는 유지), 선택 항목 중
+        // 다른 공간에 속한 나머지는 이 드롭으로는 건드리지 않습니다(그런 경우는 공간
+        // 헤더 위로 드롭하는 기존 이동/복사 동작을 이용해주세요).
+        function sameRoomDragCodes(){
+          if(!currentDragKeys || !currentDragKeys.length) return [];
           var thisRoomId = row.getAttribute('data-room-id');
+          return currentDragKeys.map(function(k){
+            var sep = k.indexOf('||');
+            return { roomId: k.slice(0, sep), code: k.slice(sep + 2) };
+          }).filter(function(o){ return o.roomId === thisRoomId; }).map(function(o){ return o.code; });
+        }
+        row.addEventListener('dragover', function(e){
           var thisCode = row.getAttribute('data-code');
-          if(dragRoomId !== thisRoomId || dragCode === thisCode) return;
+          var codes = sameRoomDragCodes();
+          if(!codes.length || codes.indexOf(thisCode) !== -1) return;
           e.preventDefault();
           e.stopPropagation();
           var rect = row.getBoundingClientRect();
@@ -3362,18 +3449,16 @@ function renderQuote(){
           row.classList.remove('drop-indicator-before', 'drop-indicator-after');
         });
         row.addEventListener('drop', function(e){
-          if(!currentDragKeys || currentDragKeys.length !== 1) return;
-          var sep = currentDragKeys[0].indexOf('||');
-          var dragRoomId = currentDragKeys[0].slice(0, sep), dragCode = currentDragKeys[0].slice(sep + 2);
           var thisRoomId = row.getAttribute('data-room-id');
           var thisCode = row.getAttribute('data-code');
-          if(dragRoomId !== thisRoomId || dragCode === thisCode) return;
+          var codes = sameRoomDragCodes();
+          if(!codes.length || codes.indexOf(thisCode) !== -1) return;
           e.preventDefault();
           e.stopPropagation();
           var rect = row.getBoundingClientRect();
           var isAfter = (e.clientY - rect.top) > rect.height / 2;
           row.classList.remove('drop-indicator-before', 'drop-indicator-after');
-          reorderItemInRoom(thisRoomId, dragCode, thisCode, isAfter);
+          reorderItemsInRoom(thisRoomId, codes, thisCode, isAfter);
           currentDragKeys = null;
         });
       });
@@ -3416,21 +3501,6 @@ function renderQuote(){
   var mbbTotalEl = document.getElementById('mbbTotal');
   if(mbbCountEl) mbbCountEl.textContent = grandQty;
   if(mbbTotalEl) mbbTotalEl.textContent = fmt(grandTotal);
-
-  // 공급가액/부가세/합계 요약 박스 — 증감율(%)이 이미 단가(priceOverrides)에 반영되어 있으므로
-  // grandTotal 자체가 실제 공급가액입니다(별도로 한 번 더 차감하지 않습니다).
-  // 화면 전용 계산이며, 인쇄/PDF의 금액 계산과는 전혀 무관합니다.
-  var qmSupplyEl = document.getElementById('qmSummarySupply');
-  var qmVatEl = document.getElementById('qmSummaryVat');
-  var qmGrandEl = document.getElementById('qmSummaryGrand');
-  if(qmSupplyEl && qmVatEl && qmGrandEl){
-    var qmSupply = grandTotal;
-    var qmVat = Math.round(qmSupply * 0.1);
-    var qmGrand = qmSupply + qmVat;
-    qmSupplyEl.textContent = fmt(qmSupply);
-    qmVatEl.textContent = fmt(qmVat);
-    qmGrandEl.textContent = fmt(qmGrand);
-  }
 
   saveDraftState();
 }
@@ -3549,21 +3619,21 @@ function renderQmCertFilters(){
 }
 
 // 제품이 많아질수록 품명/코드/G2B번호가 서로 뒤섞여 잘 안 보인다는 피드백에 따라,
-// G2B번호를 카드 맨 위에 배지로 항상 먼저 보여주고 코드는 배지 옆에 작게 병기합니다.
-// (기존에는 G2B검색 결과에만 배지를 별도로 붙였는데, 이제 모든 카드에 공통으로 적용합니다.)
+// G2B번호 → 품명 → 코드 → 규격 순으로 세로로 쌓아 보여주고, + 추가 버튼은 카드 맨 아래에
+// 전체 너비로 배치합니다(예전엔 오른쪽 옆에 세로 중앙 정렬로 떠 있었습니다).
 function qmProductCard(p, addLabel){
   var card = document.createElement('div');
   card.className = 'qm-result-card';
   card.innerHTML =
-    '<div class="qm-result-thumb" data-thumb>' + IMG_ICON + '</div>' +
-    '<div class="qm-result-info">' +
-      '<div class="qm-result-badges">' +
+    '<div class="qm-result-top">' +
+      '<div class="qm-result-thumb" data-thumb>' + IMG_ICON + '</div>' +
+      '<div class="qm-result-info">' +
         '<span class="qm-g2b-badge">G2B ' + escHtml(p.g2b || '-') + '</span>' +
+        '<div class="qm-result-name">' + escHtml(p.name) + '</div>' +
         '<span class="qm-code-text">' + escHtml(p.code) + '</span>' +
+        '<div class="qm-result-spec">' + escHtml(p.spec) + '</div>' +
+        '<div class="qm-result-price">' + fmt(p.price) + '</div>' +
       '</div>' +
-      '<div class="qm-result-name">' + escHtml(p.name) + '</div>' +
-      '<div class="qm-result-spec">' + escHtml(p.spec) + '</div>' +
-      '<div class="qm-result-price">' + fmt(p.price) + '</div>' +
     '</div>' +
     '<button type="button" class="qm-add-btn">' + escHtml(addLabel || '+ 추가') + '</button>';
   card.querySelector('.qm-add-btn').addEventListener('click', function(){ addToCart(p.code); });
@@ -3672,6 +3742,50 @@ document.querySelectorAll('.qm-collapsible[data-collapse-target]').forEach(funct
   });
 });
 
+// #qmRoomTabs 좌우 드래그 스크롤 — overflow-x:auto만으로는 스크롤바/휠/터치 스와이프로만
+// 스크롤되고 마우스로 직접 클릭한 채 끄는(click-and-drag) 동작은 브라우저가 지원하지
+// 않으므로 직접 구현합니다. #qmRoomTabs 자체(래퍼 div)는 renderQmRoomTabs()가 매번
+// innerHTML만 다시 그리는 대상이라 이 div 자체는 재생성되지 않으므로, 한 번만 연결하면
+// 재렌더링 후에도 계속 동작합니다.
+// 짧게 클릭만 한 경우(실제로 끌지 않은 경우)는 기존 탭 클릭(공간 전환) 동작이 그대로
+// 살아있어야 하므로, 일정 거리 이상 실제로 움직였을 때만 "드래그"로 간주하고, 그 경우에만
+// 뒤따라오는 click 이벤트를 캡처 단계에서 가로채 탭 전환이 실수로 발생하지 않도록 막습니다.
+(function(){
+  var wrap = document.getElementById('qmRoomTabs');
+  if(!wrap) return;
+  var isDown = false, dragged = false, startX = 0, startScrollLeft = 0;
+  var DRAG_THRESHOLD = 5;
+
+  function suppressNextClick(e){
+    e.stopPropagation();
+    e.preventDefault();
+    wrap.removeEventListener('click', suppressNextClick, true);
+  }
+
+  wrap.addEventListener('mousedown', function(e){
+    // 입력칸/버튼(공간 이름 수정·삭제·추가 폼 등) 위에서 누른 경우는 드래그를 시작하지
+    // 않습니다 — 텍스트 선택이나 버튼 클릭이 방해받지 않도록.
+    if(e.target.closest('input, button, .qm-room-tab-edit, .qm-room-tab-x')) return;
+    isDown = true;
+    dragged = false;
+    startX = e.pageX;
+    startScrollLeft = wrap.scrollLeft;
+    wrap.classList.add('qm-dragging');
+  });
+  window.addEventListener('mousemove', function(e){
+    if(!isDown) return;
+    var dx = e.pageX - startX;
+    if(Math.abs(dx) > DRAG_THRESHOLD) dragged = true;
+    wrap.scrollLeft = startScrollLeft - dx;
+  });
+  window.addEventListener('mouseup', function(){
+    if(!isDown) return;
+    isDown = false;
+    wrap.classList.remove('qm-dragging');
+    if(dragged) wrap.addEventListener('click', suppressNextClick, true);
+  });
+})();
+
 // 메모(내부용) — 새로고침해도 유지되도록 draft state에 함께 저장/복원합니다.
 var quoteMemoInputEl = document.getElementById('quoteMemoInput');
 if(quoteMemoInputEl){
@@ -3749,7 +3863,8 @@ function runPrintFlow(){
   });
 }
 
-document.getElementById('printBtn').addEventListener('click', runPrintFlow);
+// 예전엔 상단(printBtnTop)과 표 위(printBtn) 두 곳에 인쇄 버튼이 중복으로 있었는데,
+// 표 위 쪽은 중복이라는 피드백에 따라 제거되어 이제 printBtnTop 하나만 남았습니다.
 var printBtnTopEl = document.getElementById('printBtnTop');
 if(printBtnTopEl) printBtnTopEl.addEventListener('click', runPrintFlow);
 
@@ -3769,11 +3884,11 @@ if(printBtnTopEl) printBtnTopEl.addEventListener('click', runPrintFlow);
 // 다만 압축률이 너무 커지면(예: 아주 긴 값) 숫자가 지나치게 가늘어 보이므로,
 // 가로 압축은 최대 28%(scale 0.72)까지만 허용하고, 그 이상 필요한 경우에만
 // 보조 수단으로 폰트를 7pt까지 살짝 줄여 자연폭 자체를 낮춘 뒤 다시 압축률을 계산합니다.
-// START_PT(기본 크기)는 CSS .row-g2b의 font-size(9pt)와 반드시 일치해야 합니다 —
+// START_PT(기본 크기)는 CSS .row-g2b의 font-size(8pt)와 반드시 일치해야 합니다 —
 // 이 함수가 매번 span의 인라인 font-size를 명시적으로 재설정(우선순위상 CSS보다 위)
-// 하기 때문에, 두 값이 어긋나면 화면에는 9pt인데 계산은 11pt 기준으로 하는 불일치가 생깁니다.
+// 하기 때문에, 두 값이 어긋나면 화면에는 8pt인데 계산은 다른 크기 기준으로 하는 불일치가 생깁니다.
 function shrinkG2BCellsForPrint(){
-  var MIN_SCALE = 0.72, MIN_PT = 7, START_PT = 9, STEP_PT = 0.5;
+  var MIN_SCALE = 0.72, MIN_PT = 6.5, START_PT = 8, STEP_PT = 0.5;
   document.querySelectorAll('#quoteWrap .row-g2b').forEach(function(td){
     var span = td.querySelector('.g2b-text');
     if(!span) return;
